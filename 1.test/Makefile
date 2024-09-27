@@ -9,7 +9,7 @@ OBJECTS = $(SOURCES:.c=.o)  # 生成的目标文件
 
 
 # 默认目标
-all: $(TARGET) prepare
+all: prepare $(TARGET) 
 
 prepare:
 	mkdir -p build
