@@ -1,5 +1,6 @@
 .git
 .idea
+.vscode
 */.idea
 */.git
 */cmake-build-debug-wsl
