@@ -8,3 +8,5 @@
 **/cmake-build-debug*
 **/*.o
 **/build
+linux-6.11.3
+source/linux-6.11.3

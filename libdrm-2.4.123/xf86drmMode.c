@@ -163,11 +163,14 @@ drm_public int drmIsKMS(int fd)
 
 drm_public drmModeResPtr drmModeGetResources(int fd)
 {
+	// 结构体详见libdrm-2.4.123/include/drm/drm_mode.h
 	struct drm_mode_card_res res, counts;
+	// drmModeResPtr和drm_mode_card_res类似，详见libdrm-2.4.123/xf86drmMode.h
 	drmModeResPtr r = 0;
 
 retry:
 	memclear(res);
+	// DRM_IOCTL_MODE_GETRESOURCES的定义在
 	if (drmIoctl(fd, DRM_IOCTL_MODE_GETRESOURCES, &res))
 		return 0;
 
