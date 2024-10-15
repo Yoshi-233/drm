@@ -77,7 +77,13 @@ int main(int argc, char **argv)
 
 	fd = open("/dev/dri/card0", O_RDWR | O_CLOEXEC);
 
+	/* 打开设备文件，并获取连接器和资源信息, 
+	CRTCS是连接器的ID，connectors是连接器的属性，res是资源信息 */
 	res = drmModeGetResources(fd);
+	if(res == NULL) {
+		fprintf(stderr, "drmModeGetResources failed\n");
+                return -1;
+	}
 	crtc_id = res->crtcs[0];
 	conn_id = res->connectors[0];
 
@@ -91,7 +97,7 @@ int main(int argc, char **argv)
 	drmModeSetCrtc(fd, crtc_id, buf.fb_id,
 			0, 0, &conn_id, 1, &conn->modes[0]);
 
-	getchar();
+	getchar(); 
 
 	modeset_destroy_fb(fd, &buf);
 
