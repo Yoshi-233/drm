@@ -170,7 +170,11 @@ drm_public drmModeResPtr drmModeGetResources(int fd)
 
 retry:
 	memclear(res);
-	// DRM_IOCTL_MODE_GETRESOURCES的定义在
+	/* DRM_IOCTL_MODE_GETRESOURCES的定义在./libdrm-2.4.123/include/drm/drm.h
+	 * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
+	 * DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETRESOURCES, drm_mode_getresources, 0),
+	 * drm_mode_getresources函数在 ./linux-6.11.3/drivers/gpu/drm/drm_mode_config.c
+	 * */
 	if (drmIoctl(fd, DRM_IOCTL_MODE_GETRESOURCES, &res))
 		return 0;
 
