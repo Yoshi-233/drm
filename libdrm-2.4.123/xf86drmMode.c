@@ -207,6 +207,9 @@ retry:
 	/* The number of available connectors and etc may have changed with a
 	 * hotplug event in between the ioctls, in which case the field is
 	 * silently ignored by the kernel.
+	 * 这段代码检查当前获取的资源信息的数量（res）是否大于之前记录的数量（counts）。
+	 * 由于在两个 ioctl 调用之间可能发生热插拔事件，所以可能会导致资源数量发生变化。
+	 * 这包括帧缓冲区（framebuffers）、Crtc、连接器（connectors）和编码器（encoders）的数量。
 	 */
 	if (counts.count_fbs < res.count_fbs ||
 	    counts.count_crtcs < res.count_crtcs ||
@@ -240,6 +243,8 @@ retry:
 	r->crtcs      = drmAllocCpy(U642VOID(res.crtc_id_ptr), res.count_crtcs, sizeof(uint32_t));
 	r->connectors = drmAllocCpy(U642VOID(res.connector_id_ptr), res.count_connectors, sizeof(uint32_t));
 	r->encoders   = drmAllocCpy(U642VOID(res.encoder_id_ptr), res.count_encoders, sizeof(uint32_t));
+	// 这里检查是否成功分配所有资源的内存。如果任何一项失败（即相应指针为NULL且计数大于0），
+	// 则释放先前分配的内存并将指针r设置为NULL，以避免野指针。
 	if ((res.count_fbs && !r->fbs) ||
 	    (res.count_crtcs && !r->crtcs) ||
 	    (res.count_connectors && !r->connectors) ||
