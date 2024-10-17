@@ -88,6 +88,11 @@ void drm_modeset_unregister_all(struct drm_device *dev)
  * Returns:
  * Zero on success, negative errno on failure.
  */
+/* 这段代码的主要功能是通过 drm_mode_getresources 函数收集图形设备的资源信息，
+ * 包括帧缓冲区、CRT、编码器和连接器的信息，并将这些数据返回给用户空间。
+ * 它确保了对共享数据结构的安全访问，处理了多个图形组件的相关信息，支持图形驱动程序的基本功能。
+ * 整体而言，这段代码是渲染任务中资源管理的关键部分，确保用户空间能够获取到设备的必要配置信息以进行图像处理和显示。 
+ * * */
 int drm_mode_getresources(struct drm_device *dev, void *data,
 			  struct drm_file *file_priv)
 {
@@ -95,21 +100,27 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 	struct drm_mode_card_res *card_res = data;
 	/* 结构体定义位置：./linux-6.11.3/include/drm/drm_framebuffer.h */
 	struct drm_framebuffer *fb;
+	// TODO：
 	struct drm_connector *connector;
+	// TODO：
 	struct drm_crtc *crtc;
+	// TODO：
 	struct drm_encoder *encoder;
 	int count, ret = 0;
 	uint32_t __user *fb_id;
 	uint32_t __user *crtc_id;
 	uint32_t __user *connector_id;
 	uint32_t __user *encoder_id;
+	// TODO：
 	struct drm_connector_list_iter conn_iter;
 
+	// 使用 drm_core_check_feature 函数检查是否支持驱动程序模式设置。如果不支持，则返回一个错误代码。
 	if (!drm_core_check_feature(dev, DRIVER_MODESET))
 		return -EOPNOTSUPP;
 
 	mutex_lock(&file_priv->fbs_lock);
 	count = 0;
+	// 通过 put_user 函数将每个帧缓冲区的 ID 存储到 card_res 结构体中，直到达到 count_fbs 的限制
 	fb_id = u64_to_user_ptr(card_res->fb_id_ptr);
 	list_for_each_entry(fb, &file_priv->fbs, filp_head) {
 		if (count < card_res->count_fbs &&

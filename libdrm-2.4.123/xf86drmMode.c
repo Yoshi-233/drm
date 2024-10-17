@@ -272,6 +272,7 @@ drm_public int drmModeAddFB(int fd, uint32_t width, uint32_t height, uint8_t dep
                             uint8_t bpp, uint32_t pitch, uint32_t bo_handle,
                             uint32_t *buf_id)
 {
+	// ./libdrm-2.4.123/include/drm/drm_mode.h, 类似drm_mode_create_dumb
 	struct drm_mode_fb_cmd f;
 	int ret;
 
@@ -283,9 +284,15 @@ drm_public int drmModeAddFB(int fd, uint32_t width, uint32_t height, uint8_t dep
 	f.depth  = depth;
 	f.handle = bo_handle;
 
+	/* DRM_IOCTL_MODE_GETRESOURCES的定义在./libdrm-2.4.123/include/drm/drm.h
+	 * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
+	 * DRM_IOCTL_DEF(DRM_IOCTL_MODE_ADDFB, drm_mode_addfb_ioctl, 0),,
+	 * drm_mode_addfb_ioctl函数在./linux-6.11.3/drivers/gpu/drm/drm_framebuffer.c
+	 * */
 	if ((ret = DRM_IOCTL(fd, DRM_IOCTL_MODE_ADDFB, &f)))
 		return ret;
 
+	// 如果帧缓冲区成功创建，f.fb_id将包含新创建的帧缓冲区的ID，函数将其存储到buf_id指向的位置，并返回0表示成功。
 	*buf_id = f.fb_id;
 	return 0;
 }
@@ -420,6 +427,7 @@ drm_public int drmModeSetCrtc(int fd, uint32_t crtcId, uint32_t bufferId,
 		   uint32_t x, uint32_t y, uint32_t *connectors, int count,
 		   drmModeModeInfoPtr mode)
 {
+	// 结构体定义位置./libdrm-2.4.123/include/drm/drm_mode.h
 	struct drm_mode_crtc crtc;
 
 	memclear(crtc);
@@ -434,6 +442,11 @@ drm_public int drmModeSetCrtc(int fd, uint32_t crtcId, uint32_t bufferId,
 	  crtc.mode_valid = 1;
 	}
 
+	/* 定义在./libdrm-2.4.123/include/drm/drm.h
+	 * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
+	 * DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETCRTC, drm_mode_setcrtc, DRM_MASTER),,
+	 * drm_mode_setcrtc函数在 ./linux-6.11.3/drivers/gpu/drm/drm_crtc.c
+	 * */
 	return DRM_IOCTL(fd, DRM_IOCTL_MODE_SETCRTC, &crtc);
 }
 
@@ -515,27 +528,42 @@ drm_public drmModeEncoderPtr drmModeGetEncoder(int fd, uint32_t encoder_id)
 
 /*
  * Connector manipulation
+ * _drmModeGetConnector 的主要功能是在与DRM设备交互的过程中，通过文件描述符获取特定连接器的详细信息。
+ * 这些信息包括连接器的ID、状态、可用模式、属性及编码器信息。该函数涉及动态内存管理，错误处理，以及硬件热插拔支持。
+ * 通过封装在 drmModeConnectorPtr 结构体中，有助于后续程序获取设备的状态和配置信息。
+ * probe: 布尔值，指示是否进行探测
  */
 static drmModeConnectorPtr
 _drmModeGetConnector(int fd, uint32_t connector_id, int probe)
 {
+	// 结构体详见libdrm-2.4.123/include/drm/drm_mode.h
 	struct drm_mode_get_connector conn, counts;
+	// 结构体详见libdrm-2.4.123/xf86drmMode.h， 与struct drm_mode_get_connector类似
 	drmModeConnectorPtr r = NULL;
+	// 结构体详见libdrm-2.4.123/include/drm/drm_mode.h, stack_mode 用于在没有动态分配内存的情况下存储模式信息
 	struct drm_mode_modeinfo stack_mode;
 
 	memclear(conn);
 	conn.connector_id = connector_id;
 	if (!probe) {
 		conn.count_modes = 1;
+		// 如果 probe 为假，预填充值用于模式信息，以便在没有动态分配的情况下使用
 		conn.modes_ptr = VOID2U64(&stack_mode);
 	}
 
+	/* DRM_IOCTL_MODE_GETRESOURCES的定义在./libdrm-2.4.123/include/drm/drm.h
+	 * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
+	 * DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETCONNECTOR, drm_mode_getconnector, 0),,
+	 * drm_mode_getconnector函数在 ./linux-6.11.3/drivers/gpu/drm/drm_connector.c
+	 * */
 	if (drmIoctl(fd, DRM_IOCTL_MODE_GETCONNECTOR, &conn))
 		return 0;
 
 retry:
 	counts = conn;
 
+	// 动态分配内存用于存储属性、模式和编码器信息（如 props_ptr, modes_ptr 等），
+	// 以防获取的这些信息数量变化，而需要重新尝试填充
 	if (conn.count_props) {
 		conn.props_ptr = VOID2U64(drmMalloc(conn.count_props*sizeof(uint32_t)));
 		if (!conn.props_ptr)
@@ -560,6 +588,7 @@ retry:
 			goto err_allocs;
 	}
 
+	// 再次调用 drmIoctl 以获取可能变化的连接器信息。(热插拔)
 	if (drmIoctl(fd, DRM_IOCTL_MODE_GETCONNECTOR, &conn))
 		goto err_allocs;
 
@@ -600,6 +629,8 @@ retry:
 	r->connector_type  = conn.connector_type;
 	r->connector_type_id = conn.connector_type_id;
 
+	// 这里检查是否成功分配所有资源的内存。如果任何一项失败（即相应指针为NULL且计数大于0），
+	// 则释放先前分配的内存并将指针r设置为NULL，以避免野指针。
 	if ((r->count_props && !r->props) ||
 	    (r->count_props && !r->prop_values) ||
 	    (r->count_modes && !r->modes) ||

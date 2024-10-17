@@ -62,7 +62,7 @@ enum drm_connector_force {
  * #defines for the uapi!
  */
 enum drm_connector_status {
-	/**
+/**
 	 * @connector_status_connected: The connector is definitely connected to
 	 * a sink device, and can be enabled.
 	 */

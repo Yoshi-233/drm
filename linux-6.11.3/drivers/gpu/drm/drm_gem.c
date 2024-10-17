@@ -310,6 +310,8 @@ EXPORT_SYMBOL(drm_gem_handle_delete);
  *
  * Returns:
  * 0 on success or a negative error code on failure.
+ * 这段代码是一个函数 drm_gem_dumb_map_offset，属于一个图形内存管理模块，
+ * 主要用于设置一个假映射偏移（mmap offset），以便用户空间可以通过此偏移访问图形内存对象（GEM对象）
  */
 int drm_gem_dumb_map_offset(struct drm_file *file, struct drm_device *dev,
 			    u32 handle, u64 *offset)
@@ -317,20 +319,26 @@ int drm_gem_dumb_map_offset(struct drm_file *file, struct drm_device *dev,
 	struct drm_gem_object *obj;
 	int ret;
 
+	// 该部分调用 drm_gem_object_lookup 函数尝试通过指定的 handle 找到对应的GEM对象。
 	obj = drm_gem_object_lookup(file, handle);
 	if (!obj)
 		return -ENOENT;
 
-	/* Don't allow imported objects to be mapped */
+	/* Don't allow imported objects to be mapped 
+	* 系统检查该对象是否是一个导入的对象（即是否是从其他来源引用的）。
+	* 如果是导入对象，不允许对其进行映射，因此返回 -EINVAL（无效参数），并跳转到 out 标签处进行清理。
+	*/
 	if (obj->import_attach) {
 		ret = -EINVAL;
 		goto out;
 	}
-
+	// 调用 drm_gem_create_mmap_offset 函数为找到的GEM对象创建一个假映射偏移。如果创建失败，返回值 ret 将非零，接着跳转到 out。
 	ret = drm_gem_create_mmap_offset(obj);
 	if (ret)
 		goto out;
 
+	// 如果上面的步骤成功，使用 drm_vma_node_offset_addr 函数获取该对象的映射偏移，
+	// 并将其赋值给调用者传入的指针 offset。
 	*offset = drm_vma_node_offset_addr(&obj->vma_node);
 out:
 	drm_gem_object_put(obj);

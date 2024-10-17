@@ -202,6 +202,7 @@ typedef enum {
 	DRM_MODE_SUBPIXEL_NONE           = 6
 } drmModeSubPixel;
 
+// 结构体定义类似 struct drm_mode_get_connector， libdrm-2.4.123/include/drm/drm_mode.h
 typedef struct _drmModeConnector {
 	uint32_t connector_id;
 	uint32_t encoder_id; /**< Encoder currently connected to */

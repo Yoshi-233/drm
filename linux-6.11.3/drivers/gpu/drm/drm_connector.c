@@ -3087,33 +3087,46 @@ drm_mode_expose_to_userspace(const struct drm_display_mode *mode,
 	return true;
 }
 
+/* 这段代码的主要功能是从用户空间获取和提供显示连接器的详细信息。
+ * 它在处理过程中支持多个连接器属性的获取，例如编码器信息和显示模式。
+ * 在 Linux DRM 驱动框架中，通过这个函数，用户空间能够有效地了解和配置显示设备的状态，从而实现动态的图形显示管理。
+ * 该函数确保通过适当的同步机制来安全地访问和返回连接器状态，确保用户空间能够获得最新的信息并且操作安全。 
+ * */
+
 int drm_mode_getconnector(struct drm_device *dev, void *data,
 			  struct drm_file *file_priv)
 {
 	struct drm_mode_get_connector *out_resp = data;
+	// ./linux-6.11.3/include/drm/drm_connector.h
 	struct drm_connector *connector;
+	// ./linux-6.11.3/include/drm/drm_encoder.h
 	struct drm_encoder *encoder;
+	// 类似类似用户层的结构体，
 	struct drm_display_mode *mode;
 	int mode_count = 0;
 	int encoders_count = 0;
 	int ret = 0;
 	int copied = 0;
+	// 类似用户层的结构体，./linux-6.11.3/include/uapi/drm/drm_mode.h
 	struct drm_mode_modeinfo u_mode;
 	struct drm_mode_modeinfo __user *mode_ptr;
 	uint32_t __user *encoder_ptr;
 	bool is_current_master;
 
+	// 检查设备是否支持模式设置功能。如果不支持，返回不支持操作的错误。
 	if (!drm_core_check_feature(dev, DRIVER_MODESET))
 		return -EOPNOTSUPP;
 
 	memset(&u_mode, 0, sizeof(struct drm_mode_modeinfo));
 
+	// 根据提供的连接器 ID 查找对应的连接器。如果找不到，返回找不到错误。
 	connector = drm_connector_lookup(dev, file_priv, out_resp->connector_id);
 	if (!connector)
 		return -ENOENT;
 
 	encoders_count = hweight32(connector->possible_encoders);
-
+	// 如果接收到的编码器数量足够，
+	// 循环通过 drm_connector_for_each_possible_encoder 将每个编码器的 ID 复制到用户提供的数组中。
 	if ((out_resp->count_encoders >= encoders_count) && encoders_count) {
 		copied = 0;
 		encoder_ptr = (uint32_t __user *)(unsigned long)(out_resp->encoders_ptr);
@@ -3132,6 +3145,8 @@ int drm_mode_getconnector(struct drm_device *dev, void *data,
 	out_resp->connector_type = connector->connector_type;
 	out_resp->connector_type_id = connector->connector_type_id;
 
+	// out_resp 结构体中填充连接器的基本信息，包括宽度、高度、子像素种类和连接状态。
+	// 检查当前进程是否为 DRM 主控进程，如果是，则调用 fill_modes 填充模式信息。
 	is_current_master = drm_is_current_master(file_priv);
 
 	mutex_lock(&dev->mode_config.mutex);
@@ -3150,7 +3165,9 @@ int drm_mode_getconnector(struct drm_device *dev, void *data,
 	out_resp->subpixel = connector->display_info.subpixel_order;
 	out_resp->connection = connector->status;
 
-	/* delayed so we get modes regardless of pre-fill_modes state */
+	/* delayed so we get modes regardless of pre-fill_modes state 
+	* 遍历连接器中当前的所有模式，并通过 drm_mode_expose_to_userspace 检查哪些模式可以暴露给用户空间。
+	* 根据暴露给用户空间的模式数目填充返回数据结构。*/
 	list_for_each_entry(mode, &connector->modes, head) {
 		WARN_ON(mode->expose_to_userspace);
 

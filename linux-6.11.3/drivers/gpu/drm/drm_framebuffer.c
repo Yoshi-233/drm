@@ -123,6 +123,8 @@ int drm_mode_addfb(struct drm_device *dev, struct drm_mode_fb_cmd *or,
 	if (!drm_core_check_feature(dev, DRIVER_MODESET))
 		return -EOPNOTSUPP;
 
+	// 调用drm_driver_legacy_fb_format根据输入的bpp（位数）和depth（深度）获取帧缓冲区的像素格式。
+	// 如果像素格式无效，记录调试信息并返回 - EINVAL（无效参数） 
 	r.pixel_format = drm_driver_legacy_fb_format(dev, or->bpp, or->depth);
 	if (r.pixel_format == DRM_FORMAT_INVALID) {
 		drm_dbg_kms(dev, "bad {bpp:%d, depth:%d}\n", or->bpp, or->depth);
@@ -353,8 +355,10 @@ int drm_mode_addfb2_ioctl(struct drm_device *dev,
 			  void *data, struct drm_file *file_priv)
 {
 #ifdef __BIG_ENDIAN
+	// 这是一个条件编译指令，只有在使用大端字节序（big endian）时才会编译和执行下面的代码块。
 	if (!dev->mode_config.quirk_addfb_prefer_host_byte_order) {
-		/*
+		/* 这里检查设备的模式配置是否设置了名为quirk_addfb_prefer_host_byte_order的特性。
+		 * 这个特性是为了确保在大端机器上，drm_mode_addfb()函数的兼容代码正确处理。
 		 * Drivers must set the
 		 * quirk_addfb_prefer_host_byte_order quirk to make
 		 * the drm_mode_addfb() compat code work correctly on
@@ -366,6 +370,7 @@ int drm_mode_addfb2_ioctl(struct drm_device *dev,
 		 * then.  So block it to make userspace fallback to
 		 * ADDFB.
 		 */
+		// 这行代码记录了一个调试信息，指出在大端模式下addfb2不正常工作
 		drm_dbg_kms(dev, "addfb2 broken on bigendian");
 		return -EOPNOTSUPP;
 	}

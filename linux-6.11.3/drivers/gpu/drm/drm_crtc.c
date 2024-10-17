@@ -689,6 +689,8 @@ EXPORT_SYMBOL(drm_crtc_check_viewport);
  * Returns:
  * Zero on success, negative errno on failure.
  */
+// drm_mode_setcrtc 函数是一个核心功能，用于允许用户通过 ioctl 接口请求对显示控制器（CRTC）进行配置。
+// 在执行配置时，函数会处理用户提供的数据，更新显示参数，并返回操作的结果。
 int drm_mode_setcrtc(struct drm_device *dev, void *data,
 		     struct drm_file *file_priv)
 {

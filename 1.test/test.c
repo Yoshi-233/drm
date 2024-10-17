@@ -12,7 +12,8 @@
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 
-struct buffer_object {
+struct buffer_object
+{
 	uint32_t width;
 	uint32_t height;
 	uint32_t pitch;
@@ -26,28 +27,41 @@ struct buffer_object buf;
 
 static int modeset_create_fb(int fd, struct buffer_object *bo)
 {
+	// ./libdrm-2.4.123/include/drm/drm_mode.h
 	struct drm_mode_create_dumb create = {};
- 	struct drm_mode_map_dumb map = {};
+	struct drm_mode_map_dumb map = {};
 
 	/* create a dumb-buffer, the pixel format is XRGB888 */
 	create.width = bo->width;
 	create.height = bo->height;
 	create.bpp = 32;
+	/* DRM_IOCTL_MODE_CREATE_DUMB的定义在./libdrm-2.4.123/include/drm/drm.h
+	 * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
+	 * DRM_IOCTL_DEF(DRM_IOCTL_MODE_CREATE_DUMB, drm_mode_create_dumb_ioctl, 0),
+	 * drm_mode_create_dumb_ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_dumb_buffers.c
+	 * */
 	drmIoctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &create);
 
 	/* bind the dumb-buffer to an FB object */
 	bo->pitch = create.pitch;
 	bo->size = create.size;
 	bo->handle = create.handle;
+	// 调用drmModeAddFB将dumb buffer绑定到一个帧缓冲对象上。此时指定了帧缓冲的宽度、高度及其他参数
+	// 位置./libdrm-2.4.123/xf86drmMode.c
 	drmModeAddFB(fd, bo->width, bo->height, 24, 32, bo->pitch,
-			   bo->handle, &bo->fb_id);
+		     bo->handle, &bo->fb_id);
 
 	/* map the dumb-buffer to userspace */
 	map.handle = create.handle;
+	/* DRM_IOCTL_MODE_MAP_DUMB的定义在./libdrm-2.4.123/include/drm/drm.h
+	 * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
+	 * DRM_IOCTL_DEF(DRM_IOCTL_MODE_MAP_DUMB, drm_mode_mmap_dumb_ioctl, 0),
+	 * drm_mode_mmap_dumb_ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_dumb_buffers.c
+	 * */
 	drmIoctl(fd, DRM_IOCTL_MODE_MAP_DUMB, &map);
 
 	bo->vaddr = mmap(0, create.size, PROT_READ | PROT_WRITE,
-			MAP_SHARED, fd, map.offset);
+			 MAP_SHARED, fd, map.offset);
 
 	/* initialize the dumb-buffer with white-color */
 	memset(bo->vaddr, 0xff, bo->size);
@@ -77,19 +91,22 @@ int main(int argc, char **argv)
 
 	fd = open("/dev/dri/card0", O_RDWR | O_CLOEXEC);
 
-	/* 打开设备文件，并获取连接器和资源信息, 
-	 * CRTCS是连接器的ID，connectors是连接器的属性，res是资源信息 
+	/* 打开设备文件，并获取连接器和资源信息,
+	 * CRTCS是连接器的ID，connectors是连接器的属性，res是资源信息
 	 * 详细注释见libdrm-2.4.123/xf86drmMode.c
 	 * */
 	res = drmModeGetResources(fd);
-	if(res == NULL) {
+	if (res == NULL)
+	{
 		fprintf(stderr, "drmModeGetResources failed\n");
-                return -1;
+		return -1;
 	}
-	
+
+	// 一般就一个显示器和连接器
 	crtc_id = res->crtcs[0];
 	conn_id = res->connectors[0];
 
+	/* 详细注释见libdrm-2.4.123/xf86drmMode.c */
 	conn = drmModeGetConnector(fd, conn_id);
 	buf.width = conn->modes[0].hdisplay;
 	buf.height = conn->modes[0].vdisplay;
@@ -98,9 +115,9 @@ int main(int argc, char **argv)
 	modeset_create_fb(fd, &buf);
 
 	drmModeSetCrtc(fd, crtc_id, buf.fb_id,
-			0, 0, &conn_id, 1, &conn->modes[0]);
+		       0, 0, &conn_id, 1, &conn->modes[0]);
 
-	getchar(); 
+	getchar();
 
 	modeset_destroy_fb(fd, &buf);
 
@@ -111,4 +128,3 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-

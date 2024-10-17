@@ -240,22 +240,22 @@ extern "C" {
  * kernel version see struct drm_display_mode.
  */
 struct drm_mode_modeinfo {
-	__u32 clock;
-	__u16 hdisplay;
-	__u16 hsync_start;
-	__u16 hsync_end;
-	__u16 htotal;
-	__u16 hskew;
-	__u16 vdisplay;
-	__u16 vsync_start;
-	__u16 vsync_end;
-	__u16 vtotal;
-	__u16 vscan;
+	__u32 clock; 	    // 表示像素时钟频率，以千赫（kHz）为单位。该值指定了显示器能够处理的每个像素的刷新速率。
+	__u16 hdisplay;	    // 水平显示的像素数，即屏幕在水平方向上可显示的像素数量。
+	__u16 hsync_start;  // 水平同步信号的开始位置，定义了何时开始一个新的水平线条的显示
+	__u16 hsync_end;    // 水平同步信号的结束位置，指示同步脉冲的结束。
+	__u16 htotal;	    // 水平总宽度，包括显示区和控制区域的总数，这个值是 hdisplay 与前后同步信号的和
+	__u16 hskew;	    // 水平偏移，表示显示输出的微小调整或校正。
+	__u16 vdisplay;	    // 垂直显示的像素数，即屏幕在垂直方向上可显示的像素数量。
+	__u16 vsync_start;  // 垂直同步信号的开始位置，指示何时开始新的垂直刷新。
+	__u16 vsync_end;    // 垂直同步信号的结束位置，指示同步脉冲的结束。
+	__u16 vtotal;	    // 垂直总高度，总像素包含了显示区和控制区域的数量。
+	__u16 vscan;	    // 垂直扫描线的数量，通常用于描述单行显示的扫描行（如交错扫描）。
 
-	__u32 vrefresh;
+	__u32 vrefresh;     // 近似的垂直刷新率，以赫兹（Hz）表示，指示屏幕每秒刷新多少次。
 
-	__u32 flags;
-	__u32 type;
+	__u32 flags;	    // 一个额外的标志位掩码，使用 DRM_MODE_FLAG_* 定义(DRM_MODE_FLAG_PHSYNC)，表示显示模式的特性或属性（如是否支持双扫描等）。
+	__u32 type;	    // 个类型标志位掩码，使用 DRM_MODE_TYPE_* 定义(DRM_MODE_TYPE_BUILTIN)，表示模式的种类或来源（如用户定义、驱动程序定义等）。
 	char name[DRM_DISPLAY_MODE_LEN];
 };
 
@@ -484,22 +484,39 @@ enum drm_mode_subconnector {
  * up-to-date at startup and after receiving a hot-plug event. User-space
  * may perform a forced-probe when the user explicitly requests it. User-space
  * shouldn't perform a forced-probe in other situations.
+ * 这段代码定义了一个名为 struct drm_mode_get_connector 的数据结构，它主要用于在用户空间中通过
+ * GETCONNECTOR ioctl 操作获取显示连接器的元数据。
+ * struct drm_mode_get_connector 是一个包含多种信息的结构体，用于描述显示连接器的状态和特性
  */
 struct drm_mode_get_connector {
-	/** @encoders_ptr: Pointer to ``__u32`` array of object IDs. */
+	/** @encoders_ptr: Pointer to ``__u32`` array of object IDs.
+	 * 指向一个 __u32 数组，表示与连接器相关的编码器的对象 ID。编码器负责将图形信号转换为特定连接器格式的信号。
+	 */
 	__u64 encoders_ptr;
-	/** @modes_ptr: Pointer to struct drm_mode_modeinfo array. */
+	/** @modes_ptr: Pointer to struct drm_mode_modeinfo array.
+	 * 指向一个 struct drm_mode_modeinfo 数组，存储与连接器兼容的显示模式的信息。
+	 */
 	__u64 modes_ptr;
-	/** @props_ptr: Pointer to ``__u32`` array of property IDs. */
+	/** @props_ptr: Pointer to ``__u32`` array of property IDs.
+	 * 指向一个 __u32 数组，包含连接器的属性 IDs。
+	 */
 	__u64 props_ptr;
-	/** @prop_values_ptr: Pointer to ``__u64`` array of property values. */
+	/** @prop_values_ptr: Pointer to ``__u64`` array of property values.
+	 * 指向一个 __u64 数组，存储连接器属性的值。
+	 */
 	__u64 prop_values_ptr;
 
-	/** @count_modes: Number of modes. */
+	/** @count_modes: Number of modes.
+	 * 表示连接器支持的显示模式的数量
+	 */
 	__u32 count_modes;
-	/** @count_props: Number of properties. */
+	/** @count_props: Number of properties.
+	 * 表示连接器的属性数量
+	 */
 	__u32 count_props;
-	/** @count_encoders: Number of encoders. */
+	/** @count_encoders: Number of encoders.
+	 * 表示与连接器对应的编码器数量。
+	 */
 	__u32 count_encoders;
 
 	/** @encoder_id: Object ID of the current encoder. */
@@ -510,6 +527,8 @@ struct drm_mode_get_connector {
 	 * @connector_type: Type of the connector.
 	 *
 	 * See DRM_MODE_CONNECTOR_* defines.
+	 * 连接器类型的标识符，使用 DRM_MODE_CONNECTOR_* 定义
+	 * 例如DRM_MODE_CONNECTOR_VGA, DRM_MODE_CONNECTOR_DSI等，在本文件中定义
 	 */
 	__u32 connector_type;
 	/**
@@ -521,6 +540,7 @@ struct drm_mode_get_connector {
 	 *
 	 * The (type, type_id) combination is not a stable identifier: the
 	 * type_id can change depending on the driver probe order.
+	 * 接器的类型特定编号，每种连接器类型下该编号是唯一的，不同的探测顺序可能影响其稳定性
 	 */
 	__u32 connector_type_id;
 
@@ -528,20 +548,30 @@ struct drm_mode_get_connector {
 	 * @connection: Status of the connector.
 	 *
 	 * See enum drm_connector_status.
+	 * 接器的状态，可能的值由 enum drm_connector_status 定义,
+	 * 位置./linux-6.11.3/include/drm/drm_connector.h
 	 */
 	__u32 connection;
-	/** @mm_width: Width of the connected sink in millimeters. */
+	/** @mm_width: Width of the connected sink in millimeters.
+	 * 连接的显示器的宽度，以毫米为单位。
+	*/
 	__u32 mm_width;
-	/** @mm_height: Height of the connected sink in millimeters. */
+	/** @mm_height: Height of the connected sink in millimeters.
+	 * 连接的显示器的高度，以毫米为单位。
+	*/
 	__u32 mm_height;
 	/**
 	 * @subpixel: Subpixel order of the connected sink.
 	 *
 	 * See enum subpixel_order.
+	 * 显示器的子像素顺序，可能的值由 enum subpixel_order 定义, 例如SubPixelHorizontalRGB
+	 * 位置./linux-6.11.3/include/drm/drm_connector.h
 	 */
 	__u32 subpixel;
 
-	/** @pad: Padding, must be zero. */
+	/** @pad: Padding, must be zero.
+	 * 为保持结构对齐而设置的填充字段，必须为零。
+	*/
 	__u32 pad;
 };
 
@@ -682,7 +712,10 @@ struct drm_mode_get_blob {
 	__u64 data;
 };
 
-struct drm_mode_fb_cmd {
+// 用途：这是原始的帧缓冲区添加请求结构，主要用于旧版的ioctl接口。它仅支持RGB格式的帧缓冲。
+// 字段：包括基础的信息，如帧缓冲的宽度、高度、每个像素的字节数（bpp）、深度、图像数据的处理等，但它的功能相对较为简单。
+struct drm_mode_fb_cmd
+{
 	__u32 fb_id;
 	__u32 width;
 	__u32 height;
@@ -729,6 +762,8 @@ struct drm_mode_fb_cmd {
  * zero when unused. Warning, for @offsets and @modifier zero can't be used to
  * figure out whether the entry is used or not since it's a valid value (a zero
  * offset is common, and a zero modifier is &DRM_FORMAT_MOD_LINEAR).
+ * 用途：这个结构体是在struct drm_mode_fb_cmd的基础上扩展的，旨在支持更多的功能，包括多平面帧缓冲和四字符代码作为像素格式的指定。
+字段：比drm_mode_fb_cmd有更多的字段和更复杂的结构，能够支持多种格式和不同的内存布局。它提供的信息更加详细，适应现代图形驱动的需求。
  */
 struct drm_mode_fb_cmd2 {
 	/** @fb_id: Object ID of the frame-buffer. */
@@ -1094,27 +1129,49 @@ struct drm_mode_crtc_page_flip_target {
  *
  * User-space fills @height, @width, @bpp and @flags. If the IOCTL succeeds,
  * the kernel fills @handle, @pitch and @size.
+ * 这段代码定义了一个名为 drm_mode_create_dumb 的结构体，
+ * 该结构体用于创建一个 KMS（Kernel Mode Setting）"dumb buffer"，
+ * 该缓冲区主要用于扫描输出（scanout）。
  */
 struct drm_mode_create_dumb {
 	__u32 height;
 	__u32 width;
+	// 表示每个像素的位数（bits per pixel），即像素所需的比特数。
+	// 例如，32bpp 表示每个像素使用 32 位来表示，在大多数情况下，这包含了红色、绿色、蓝色和透明度（Alpha）通道。
 	__u32 bpp;
+	// 这个字段通常被设置为零。在创建缓冲区时，这个字段的意义比较小，但在一些场合可以扩展，以便在未来添加更多标志。
 	__u32 flags;
 
+	// 这是缓冲区对象的句柄，当缓冲区成功创建时，内核会填充这个字段。用户可以通过这个句柄引用创建的缓冲区.
 	__u32 handle;
+	// 表示连续两行之间的字节数（即每行的跨度），这个字段在缓冲区创建成功后由内核填充，可以用于获取每行数据的存储大小。
 	__u32 pitch;
+	// 这个字段表示整个缓冲区的大小（以字节为单位）。与 pitch 一样，在缓冲区创建成功后由内核填充。
 	__u64 size;
 };
 
-/* set up for mmap of a dumb scanout buffer */
+/* set up for mmap of a dumb scanout buffer
+ * drm_mode_map_dumb 结构体的主要功能是为内核中的用户空间应用程序提供一个机制，
+ 通过这个机制，用户空间可以请求将一个简单的扫描输出缓冲区（
+ 通常是一个“愚蠢”缓冲区，意味着它没有特定的硬件加速支持）映射到其地址空间。
+ 这通常用于显示图形，例如，通过 mmap 系统调用，使得程序可以直接访问帧缓冲区的内容。*/
 struct drm_mode_map_dumb {
-	/** Handle for the object being mapped. */
+	/** Handle for the object being mapped.
+	 * 这个字段是一个无符号32位整数，表示要映射的对象的句柄。
+	 * 句柄通常是一个唯一标识符，用于引用在图形内存中的特定对象，例如帧缓冲区
+	*/
 	__u32 handle;
+	/* 这个字段用于填充，确保数据结构的对齐。
+	* 在某些体系结构中，数据结构的字段可能需要对齐到特定的字节边界，这个字段通常用来满足这种对齐要求。
+	*/
 	__u32 pad;
 	/**
 	 * Fake offset to use for subsequent mmap call
 	 *
 	 * This is a fixed-size type for 32/64 compatibility.
+	 * 这是一个无符号64位整数，表示一个“伪偏移”，用于后续的内存映射调用（mmap）。
+	 * 此偏移量是指示内存中实际映射地址的偏移，适用于32位和64位的兼容性。
+	 * 在众多平台上，mmap 系统调用用于将文件或设备的内容映射到进程的地址空间中，进而允许进程直接读写内存。
 	 */
 	__u64 offset;
 };
