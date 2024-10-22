@@ -35,12 +35,20 @@ static int modeset_create_fb(int fd, struct buffer_object *bo)
 	create.width = bo->width;
 	create.height = bo->height;
 	create.bpp = 32;
+	printf("before drmIoctl, width=%d, height=%d, bpp=%d, handle=%d, pitch=%d, size=0x%llx.\n", 
+		create.width, create.height, create.bpp, create.handle, create.pitch, create.size);
+
 	/* DRM_IOCTL_MODE_CREATE_DUMB的定义在./libdrm-2.4.123/include/drm/drm.h
 	 * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
 	 * DRM_IOCTL_DEF(DRM_IOCTL_MODE_CREATE_DUMB, drm_mode_create_dumb_ioctl, 0),
 	 * drm_mode_create_dumb_ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_dumb_buffers.c
 	 * */
+	// 创建 DUMB 缓冲区： 通过调用 drmIoctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &create);
+	// 程序向内核请求分配一个显存缓冲区。这是显存分配的主要步骤之一。
 	drmIoctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &create);
+	// pitch = width * bpp / 8
+	printf("after drmIoctl, width=%d, height=%d, bpp=%d, handle=%d, pitch=%d, size=0x%llx.\n",
+	       create.width, create.height, create.bpp, create.handle, create.pitch, create.size);
 
 	/* bind the dumb-buffer to an FB object */
 	bo->pitch = create.pitch;
@@ -48,6 +56,8 @@ static int modeset_create_fb(int fd, struct buffer_object *bo)
 	bo->handle = create.handle;
 	// 调用drmModeAddFB将dumb buffer绑定到一个帧缓冲对象上。此时指定了帧缓冲的宽度、高度及其他参数
 	// 位置./libdrm-2.4.123/xf86drmMode.c
+	// 绑定到帧缓冲对象： 在创建了 DUMB 缓冲区后，会调用 drmModeAddFB 函数，将该缓冲区绑定到帧缓冲对象（Framebuffer）上。
+	// 这是为了将缓冲区与显示设备关联，使得该缓冲区可以被用于显示输出
 	drmModeAddFB(fd, bo->width, bo->height, 24, 32, bo->pitch,
 		     bo->handle, &bo->fb_id);
 
@@ -57,8 +67,14 @@ static int modeset_create_fb(int fd, struct buffer_object *bo)
 	 * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
 	 * DRM_IOCTL_DEF(DRM_IOCTL_MODE_MAP_DUMB, drm_mode_mmap_dumb_ioctl, 0),
 	 * drm_mode_mmap_dumb_ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_dumb_buffers.c
+	 * 映射到用户空间： 然后，通过调用 drmIoctl(fd, DRM_IOCTL_MODE_MAP_DUMB, &map); 
+	 * 和 mmap，程序可以将显存缓冲区映射到用户空间，从而使用户程序能够直接访问显存。
 	 * */
+	printf("map, handle=%d, pad=%d, offset=0x%llx.\n",
+	       map.handle, map.pad, map.offset);
 	drmIoctl(fd, DRM_IOCTL_MODE_MAP_DUMB, &map);
+	printf("map, handle=%d, pad=%d, offset=0x%llx.\n",
+	       map.handle, map.pad, map.offset);
 
 	bo->vaddr = mmap(0, create.size, PROT_READ | PROT_WRITE,
 			 MAP_SHARED, fd, map.offset);
@@ -98,8 +114,7 @@ int main(int argc, char **argv)
 	 * 详细注释见libdrm-2.4.123/xf86drmMode.c
 	 * */
 	res = drmModeGetResources(fd);
-	if (res == NULL)
-	{
+	if (res == NULL) {
 		fprintf(stderr, "drmModeGetResources failed\n");
 		return -1;
 	}
@@ -127,6 +142,12 @@ int main(int argc, char **argv)
 
 	/* 详细注释见libdrm-2.4.123/xf86drmMode.c */
 	conn = drmModeGetConnector(fd, conn_id);
+	if (conn->connection == DRM_MODE_CONNECTED) {
+		printf("connect_id %d connect success.\n", conn->connector_id);
+	} else {
+		fprintf(stderr, "connect_id %d connect fail!\n", conn->connector_id);
+		return -1;
+	}
 	buf.width = conn->modes[0].hdisplay;
 	buf.height = conn->modes[0].vdisplay;
 	printf("------- some info in drmModeConnector, use conn = drmModeGetConnector(fd, conn_id); -------\n");
@@ -154,8 +175,10 @@ int main(int argc, char **argv)
 	modeset_create_fb(fd, &buf);
 
 	/* 详细注释见libdrm-2.4.123/xf86drmMode.c */
-	drmModeSetCrtc(fd, crtc_id, buf.fb_id,
-		       0, 0, &conn_id, 1, &conn->modes[0]);
+	if(drmModeSetCrtc(fd, crtc_id, buf.fb_id,
+		       0, 0, &conn_id, 1, &conn->modes[0]) < 0 ) {
+		perror("drmModeSetCrtc failed");
+	}
 
 	getchar();
 
