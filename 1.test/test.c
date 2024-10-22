@@ -114,6 +114,7 @@ int main(int argc, char **argv)
 
 	modeset_create_fb(fd, &buf);
 
+	/* 详细注释见libdrm-2.4.123/xf86drmMode.c */
 	drmModeSetCrtc(fd, crtc_id, buf.fb_id,
 		       0, 0, &conn_id, 1, &conn->modes[0]);
 

@@ -314,9 +314,9 @@ struct drm_mode_crtc {
 	__u32 x; /**< x Position on the framebuffer */
 	__u32 y; /**< y Position on the framebuffer */
 
-	__u32 gamma_size;
-	__u32 mode_valid;
-	struct drm_mode_modeinfo mode;
+	__u32 gamma_size; // 表示 gamma LUT（查找表）的大小。使用 gamma 效应可以调整图像的亮度和对比度，通常在显示设备中应用
+	__u32 mode_valid; // 一个标志，表明当前的显示模式是否有效。它通常用于指示设置的模式是否可被 CRTC 接受
+	struct drm_mode_modeinfo mode; // 是一个结构体，包含了关于当前显示模式详细信息的字段，例如像素时钟、显示分辨率、刷新率等。这个字段为 CRTC 提供了所需的模式信息。
 };
 
 #define DRM_MODE_PRESENT_TOP_FIELD	(1<<0)

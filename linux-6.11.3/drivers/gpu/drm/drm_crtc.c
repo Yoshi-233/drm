@@ -694,13 +694,21 @@ EXPORT_SYMBOL(drm_crtc_check_viewport);
 int drm_mode_setcrtc(struct drm_device *dev, void *data,
 		     struct drm_file *file_priv)
 {
+	// 位于./libdrm-2.4.123/include/drm/drm_mode.h 或 ./linux-6.11.3/include/uapi/drm/drm_mode.h
 	struct drm_mode_config *config = &dev->mode_config;
+	// 位于./libdrm-2.4.123/include/drm/drm_mode.h 或 ./linux-6.11.3/include/uapi/drm/drm_mode.h
 	struct drm_mode_crtc *crtc_req = data;
+	// 位于 ./linux-6.11.3/include/drm/drm_crtc.h
 	struct drm_crtc *crtc;
+	// ./linux-6.11.3/include/drm/drm_plane.h
 	struct drm_plane *plane;
+	// ./linux-6.11.3/include/drm/drm_connector.h
 	struct drm_connector **connector_set = NULL, *connector;
+	// ./linux-6.11.3/include/drm/drm_framebuffer.h
 	struct drm_framebuffer *fb = NULL;
+	// ./linux-6.11.3/include/drm/drm_modes.h
 	struct drm_display_mode *mode = NULL;
+	// ./linux-6.11.3/include/drm/drm_modes.h
 	struct drm_mode_set set;
 	uint32_t __user *set_connectors_ptr;
 	struct drm_modeset_acquire_ctx ctx;
@@ -712,6 +720,7 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 	/*
 	 * Universal plane src offsets are only 16.16, prevent havoc for
 	 * drivers using universal plane code internally.
+	 * crtc_req->x & 0xffff0000 检查x的高16位是否有设置。如果高16位被设置，说明x的值超出了16.16格式能够表示的范围。
 	 */
 	if (crtc_req->x & 0xffff0000 || crtc_req->y & 0xffff0000)
 		return -ERANGE;
@@ -725,7 +734,11 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 
 	plane = crtc->primary;
 
-	/* allow disabling with the primary plane leased */
+	/* allow disabling with the primary plane leased 
+	* 这里的 crtc_req->mode_valid 是一个布尔值，指示请求的显示模式是否有效。
+	* drm_lease_held(file_priv, plane->base.id) 检查当前用户是否持有对主要平面的租赁（lease）。
+	* 在图形设备中，租赁通常意味着用户空间的应用程序对某些资源（例如，显示平面）具有独占访问权限。
+	* 如果模式有效但用户没有租赁权限，函数会返回 -EACCES*/
 	if (crtc_req->mode_valid && !drm_lease_held(file_priv, plane->base.id))
 		return -EACCES;
 
@@ -734,7 +747,10 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 
 	if (crtc_req->mode_valid) {
 		/* If we have a mode we need a framebuffer. */
-		/* If we pass -1, set the mode with the currently bound fb */
+		/* If we pass -1, set the mode with the currently bound fb 
+		* 如果请求的fb_id为-1，表示需要使用当前绑定的帧缓冲区。
+		* 根据平面（plane）的状态来获取当前帧缓冲区（old_fb）。
+		* */
 		if (crtc_req->fb_id == -1) {
 			struct drm_framebuffer *old_fb;
 
@@ -753,6 +769,7 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 			/* Make refcounting symmetric with the lookup path. */
 			drm_framebuffer_get(fb);
 		} else {
+			// 如果fb_id不是-1，调用drm_framebuffer_lookup查找指定的帧缓冲区。如果未找到，返回错误
 			fb = drm_framebuffer_lookup(dev, file_priv, crtc_req->fb_id);
 			if (!fb) {
 				drm_dbg_kms(dev, "Unknown FB ID%d\n",
@@ -762,11 +779,13 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 			}
 		}
 
+		// 创建一个新的drm_display_mode对象，供后续使用。如果创建失败，返回错误。
 		mode = drm_mode_create(dev);
 		if (!mode) {
 			ret = -ENOMEM;
 			goto out;
 		}
+		// 检查用户是否允许特定的宽高比。如果不允许，但请求模式中包含相应的标志位，返回错误。
 		if (!file_priv->aspect_ratio_allowed &&
 		    (crtc_req->mode.flags & DRM_MODE_FLAG_PIC_AR_MASK) != DRM_MODE_FLAG_PIC_AR_NONE) {
 			drm_dbg_kms(dev, "Unexpected aspect-ratio flag bits\n");
@@ -774,7 +793,7 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 			goto out;
 		}
 
-
+		// 将用户模式转换为内部表示。如果转换失败，返回错误。
 		ret = drm_mode_convert_umode(dev, mode, &crtc_req->mode);
 		if (ret) {
 			drm_dbg_kms(dev, "Invalid mode (%s, %pe): " DRM_MODE_FMT "\n",
@@ -789,6 +808,7 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 		 * default formats list provided by the DRM core which doesn't
 		 * match real hardware capabilities. Skip the check in that
 		 * case.
+		 * 如果平面没有默认格式，验证帧缓冲区的像素格式是否与平面的支持格式相匹配。如果不匹配，返回错误。
 		 */
 		if (!plane->format_default) {
 			if (!drm_plane_has_format(plane, fb->format->format, fb->modifier)) {
@@ -799,6 +819,7 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 			}
 		}
 
+		// 检查请求的视口是否适合当前的帧缓冲区和显示模式。如果不合适，返回错误
 		ret = drm_crtc_check_viewport(crtc, crtc_req->x, crtc_req->y,
 					      mode, fb);
 		if (ret)
@@ -806,6 +827,8 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 
 	}
 
+	// 在这里，检查连接器的状态。如果连接器数量为0但模式已设置，则返回错误；
+	// 如果有连接器但没有有效的模式或帧缓冲区也返回错误。
 	if (crtc_req->count_connectors == 0 && mode) {
 		drm_dbg_kms(dev, "Count connectors is 0 but mode set\n");
 		ret = -EINVAL;
@@ -828,6 +851,8 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 			goto out;
 		}
 
+		// 使用 kmalloc_array 动态分配一个数组以存储指向连接器的指针。
+		// 如果分配失败（返回NULL），则设置错误码-ENOMEM并跳转到清理部分。
 		connector_set = kmalloc_array(crtc_req->count_connectors,
 					      sizeof(struct drm_connector *),
 					      GFP_KERNEL);
@@ -859,6 +884,8 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 		}
 	}
 
+	// 在这里，set 是一个 drm_mode_set 结构体的实例，用于传递设置参数。
+	// 它将当前的 CRTC 和用户请求中的几个属性设置到 set 结构体中
 	set.crtc = crtc;
 	set.x = crtc_req->x;
 	set.y = crtc_req->y;
@@ -867,7 +894,12 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 	set.num_connectors = num_connectors;
 	set.fb = fb;
 
+	// 这里根据驱动是否使用原子模式设置（atomic modeset）来选择正确的配置方法。
+	// 如果使用原子模式，调用 set_config 方法；否则，调用传统的 __drm_mode_set_config_internal 方法。
 	if (drm_drv_uses_atomic_modeset(dev))
+		// 在这段代码中，实现屏幕真正显示渲染的接口是通过调用 set_config 方法
+		// 或者 __drm_mode_set_config_internal 方法。
+		// 这两个方法的职责是配置显示控制器（CRTC）并应用显示参数。
 		ret = crtc->funcs->set_config(&set, &ctx);
 	else
 		ret = __drm_mode_set_config_internal(&set, &ctx);
