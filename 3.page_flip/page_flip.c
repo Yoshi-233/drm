@@ -75,7 +75,7 @@ static void modeset_page_flip_handler(int fd, uint32_t frame,
 	uint32_t crtc_id = *(uint32_t *)data;
 
 	i ^= 1;
-
+	printf("frame:%d, sec:%d, usec:%d.\n", frame, sec, usec);
 	drmModePageFlip(fd, crtc_id, buf[i].fb_id,
 			DRM_MODE_PAGE_FLIP_EVENT, data);
 
