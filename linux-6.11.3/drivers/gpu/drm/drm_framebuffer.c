@@ -125,6 +125,7 @@ int drm_mode_addfb(struct drm_device *dev, struct drm_mode_fb_cmd *or,
 
 	// 调用drm_driver_legacy_fb_format根据输入的bpp（位数）和depth（深度）获取帧缓冲区的像素格式。
 	// 如果像素格式无效，记录调试信息并返回 - EINVAL（无效参数） 
+	// 位置./linux-6.11.3/drivers/gpu/drm/drm_fourcc.c
 	r.pixel_format = drm_driver_legacy_fb_format(dev, or->bpp, or->depth);
 	if (r.pixel_format == DRM_FORMAT_INVALID) {
 		drm_dbg_kms(dev, "bad {bpp:%d, depth:%d}\n", or->bpp, or->depth);

@@ -58,8 +58,11 @@ static int modeset_create_fb(int fd, struct buffer_object *bo)
 	// 位置./libdrm-2.4.123/xf86drmMode.c
 	// 绑定到帧缓冲对象： 在创建了 DUMB 缓冲区后，会调用 drmModeAddFB 函数，将该缓冲区绑定到帧缓冲对象（Framebuffer）上。
 	// 这是为了将缓冲区与显示设备关联，使得该缓冲区可以被用于显示输出
+	// depth为24, bpp32代表xrgb8888, 透明度通道忽略，显示效果和RGB888一样
+	printf("fb_id=%d.\n",bo->fb_id);
 	drmModeAddFB(fd, bo->width, bo->height, 24, 32, bo->pitch,
 		     bo->handle, &bo->fb_id);
+	printf("fb_id=%d.\n",bo->fb_id);
 
 	/* map the dumb-buffer to userspace */
 	map.handle = create.handle;
