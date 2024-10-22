@@ -4,8 +4,11 @@
 CC = gcc                     # 编译器
 CFLAGS = -Wall              # 编译选项
 TARGET = page_flip               # 可执行文件名称
-SOURCES = *.c            # 源文件
-OBJECTS = $(SOURCES:.c=.o)  # 生成的目标文件
+# 定义变量SRCS，用来存放所有.c文件的文件名
+SOURCES := $(wildcard *.c)
+
+# 将SRCS中的.c后缀替换为空格，并赋值给变量OBJS
+OBJECTS := $(patsubst %.c, %.o, $(SOURCES))
 
 
 # 默认目标
@@ -20,7 +23,7 @@ $(TARGET): $(OBJECTS)
 	mv $(TARGET) build/
 
 # 编译源文件为目标文件
-%.o: %.c
+$(OBJECTS): $(SOURCES)
 	$(CC) $(CFLAGS) -c $< -o $@ -I/usr/include/drm
 
 # 清理目标
