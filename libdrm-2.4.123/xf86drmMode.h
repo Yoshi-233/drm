@@ -90,13 +90,19 @@ typedef struct _drmModeRes {
 
 typedef struct _drmModeModeInfo {
 	uint32_t clock;
+	// hsync_start:水平同步信号起始的位置（像素数），指的是在显示区域之后开始的同步信号位置。
+	// hsync_end:水平同步信号结束的位置（像素数），指的是同步信号的结束位置。
+	// htotal:水平方向的总像素数，在显示区和同步区之和。
+	// hskew:水平偏移量，它决定同步信号和像素之间的相对位置。
 	uint16_t hdisplay, hsync_start, hsync_end, htotal, hskew;
 	uint16_t vdisplay, vsync_start, vsync_end, vtotal, vscan;
 
+
+	// 表示垂直刷新率，以赫兹（Hz）为单位，即屏幕每秒能够刷新多少次。
 	uint32_t vrefresh;
 
-	uint32_t flags;
-	uint32_t type;
+	uint32_t flags; // 显示模式的标志位，用于指示此模式的特性或支持的功能。
+	uint32_t type; // 模式的类型，区分是临时模式、固定模式等。
 	char name[DRM_DISPLAY_MODE_LEN];
 } drmModeModeInfo, *drmModeModeInfoPtr;
 
@@ -213,6 +219,7 @@ typedef struct _drmModeConnector {
 	drmModeSubPixel subpixel;
 
 	int count_modes;
+	// 可用模式的数量，指该连接器所支持的显示模式的个数。
 	drmModeModeInfoPtr modes;
 
 	int count_props;

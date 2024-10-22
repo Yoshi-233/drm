@@ -83,8 +83,10 @@ static void modeset_destroy_fb(int fd, struct buffer_object *bo)
 
 int main(int argc, char **argv)
 {
-	int fd;
+	int fd, i;
+	// 结构体定义位置libdrm-2.4.123/xf86drmMode.h
 	drmModeConnector *conn;
+	// 结构体定义位置libdrm-2.4.123/xf86drmMode.h
 	drmModeRes *res;
 	uint32_t conn_id;
 	uint32_t crtc_id;
@@ -102,6 +104,23 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
+	// 打印
+	printf("------- some info in drmModeRes, use res = drmModeGetResources(fd); -------\n");
+	for (i = 0; i < res->count_fbs; i++) {
+		printf("count_fbs_idx:%d, count_fbs:%d, fb:%d.\n", i, res->count_fbs, res->fbs[i]);
+	}
+	for (i = 0; i < res->count_crtcs; i++) {
+		printf("count_crtcs_idx:%d, count_crtcs:%d, crtc:%d.\n", i, res->count_crtcs, res->crtcs[i]);
+	}
+	for (i = 0; i < res->count_connectors; i++) {
+		printf("count_connectors_idx:%d, count_connectors:%d, connector:%d.\n", i, res->count_connectors, res->connectors[i]);
+	}
+	for (i = 0; i < res->count_encoders; i++) {
+		printf("count_encoders_idx:%d, count_encoders:%d, encoder:%d.\n", i, res->count_encoders, res->encoders[i]);
+	}
+	printf("min_width:%d, max_width:%d.\n", res->min_width, res->max_width);
+	printf("min_height:%d, max_height:%d.\n\n", res->min_height, res->max_height);
+
 	// 一般就一个显示器和连接器
 	crtc_id = res->crtcs[0];
 	conn_id = res->connectors[0];
@@ -110,7 +129,27 @@ int main(int argc, char **argv)
 	conn = drmModeGetConnector(fd, conn_id);
 	buf.width = conn->modes[0].hdisplay;
 	buf.height = conn->modes[0].vdisplay;
-	printf("w:%d, h:%d.\n", buf.width, buf.height);
+	printf("------- some info in drmModeConnector, use conn = drmModeGetConnector(fd, conn_id); -------\n");
+	printf("connector_id:%d, encoder_id:%d.\n", conn->connector_id, conn->encoder_id);
+	printf("connector_type:%d, connector_type_id:%d.\n", conn->connector_type, conn->connector_type_id);
+	printf("enum connection:%d.\n", conn->connection);
+	printf("mmWidth:%d, mmHeight:%d.\n", conn->mmWidth, conn->mmHeight);
+	printf("enum subpixel:%d.\n", conn->subpixel);
+	for(i = 0; i < conn->count_modes; i++) {
+		printf("idx:%d, count_modes:%d, name:%s.\n", i, conn->count_modes, conn->modes[i].name);
+		printf("clock:%d, vrefresh:%d, flags:%d, type:%d.\n", 
+			conn->modes[i].clock, conn->modes[i].vrefresh, conn->modes[i].flags, conn->modes[i].type);
+		printf("hdisplay:%d, hsync_start:%d, hsync_end:%d, htotal:%d, hskew:%d.\n",
+		       conn->modes[i].hdisplay, conn->modes[i].hsync_start, conn->modes[i].hsync_end, conn->modes[i].htotal, conn->modes[i].hskew);
+		printf("vdisplay:%d, vsync_start:%d, vsync_end:%d, vtotal:%d, vscan:%d.\n",
+		       conn->modes[i].vdisplay, conn->modes[i].vsync_start, conn->modes[i].vsync_end, conn->modes[i].vtotal, conn->modes[i].vscan);
+	}
+	for (i = 0; i < conn->count_props; i++) {
+		printf("count_props_idx:%d, count_props:%d, prop:%d, value:0x%lx.\n", i, conn->count_props, conn->props[i], conn->prop_values[i]);
+	}
+	for (i = 0; i < conn->count_encoders; i++) {
+		printf("count_encoders_idx:%d, count_encoders:%d, encoder:%d.\n", i, conn->count_encoders, conn->encoders[i]);
+	}
 
 	modeset_create_fb(fd, &buf);
 
