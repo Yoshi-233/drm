@@ -103,20 +103,19 @@ int main(int argc, char **argv)
 
 	/* crop the rect from framebuffer(100, 150) to crtc(50, 50)
 	 * 位于./libdrm-2.4.123/xf86drm.c
-	 ** /
-	/* drm_public int drmModeSetPlane(int fd, uint32_t plane_id, uint32_t crtc_id,
-		    uint32_t fb_id, uint32_t flags,
-		    int32_t crtc_x, int32_t crtc_y,
-		    uint32_t crtc_w, uint32_t crtc_h,
-		    uint32_t src_x, uint32_t src_y,
-		    uint32_t src_w, uint32_t src_h)
-	* crtc_x, crtc_y为从显示器左上角开始显示的起始位置offset
-	* crtc_w, crtc_h为显示器显示的大小
-	* src_x, src_y为显示buffer的显示有效数据起始位置offset
-	* src_w, src_h为显示buffer使用的大小
-	* flag:
-	* 0：不使用标志，表示平面以默认方式进行渲染。
-	* */
+	 * drm_public int drmModeSetPlane(int fd, uint32_t plane_id, uint32_t crtc_id,
+	 *	    uint32_t fb_id, uint32_t flags,
+	 *	    int32_t crtc_x, int32_t crtc_y,
+	 *	    uint32_t crtc_w, uint32_t crtc_h,
+	 *	    uint32_t src_x, uint32_t src_y,
+	 *	    uint32_t src_w, uint32_t src_h)
+	 * crtc_x, crtc_y为从显示器左上角开始显示的起始位置offset
+	 * crtc_w, crtc_h为显示器显示的大小
+	 * src_x, src_y为显示buffer的显示有效数据起始位置offset
+	 * src_w, src_h为显示buffer使用的大小
+	 * flag:
+	 * 0：不使用标志，表示平面以默认方式进行渲染。
+	 * */
 	drmModeSetPlane(fd, plane_id, crtc_id, buf.fb_id, 0,
 			50, 50, 320, 320,
 			100 << 16, 150 << 16, 320 << 16, 320 << 16);
