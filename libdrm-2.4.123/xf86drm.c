@@ -1464,12 +1464,19 @@ drm_public int drmGetCap(int fd, uint64_t capability, uint64_t *value)
 
 drm_public int drmSetClientCap(int fd, uint64_t capability, uint64_t value)
 {
+    // ./libdrm-2.4.123/include/drm/drm.h
+    // capability定义也在drm.h
     struct drm_set_client_cap cap;
 
     memclear(cap);
     cap.capability = capability;
     cap.value = value;
 
+    /* DRM_IOCTL_SET_CLIENT_CAP的定义在./libdrm-2.4.123/include/drm/drm.h
+     * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
+     * DRM_IOCTL_DEF(DRM_IOCTL_SET_CLIENT_CAP, drm_setclientcap, 0),
+     * drm_setclientcap函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
+     * */
     return drmIoctl(fd, DRM_IOCTL_SET_CLIENT_CAP, &cap);
 }
 

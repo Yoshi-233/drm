@@ -3160,20 +3160,27 @@ int drm_atomic_helper_update_plane(struct drm_plane *plane,
 	struct drm_plane_state *plane_state;
 	int ret = 0;
 
+	// 使用drm_atomic_state_alloc为给定设备分配一个新的原子状态对象
 	state = drm_atomic_state_alloc(plane->dev);
 	if (!state)
 		return -ENOMEM;
 
 	state->acquire_ctx = ctx;
+	// 通过调用drm_atomic_get_plane_state为给定平面获取状态。
 	plane_state = drm_atomic_get_plane_state(state, plane);
 	if (IS_ERR(plane_state)) {
 		ret = PTR_ERR(plane_state);
 		goto fail;
 	}
 
+	// 将当前平面的CRTC（显示控制器）设置为提供的crtc
 	ret = drm_atomic_set_crtc_for_plane(plane_state, crtc);
 	if (ret != 0)
 		goto fail;
+
+	// 这里，代码将传递的帧缓冲设置为平面的状态，并更新平面在CRTC上的位置（crtc_x, crtc_y）及其宽高（crtc_w, crtc_h）。
+	// 同时，设置源帧缓冲的坐标（src_x, src_y）和大小（src_w, src_h），
+	// 这有助于定义如何将帧缓冲内容显示在平面上
 	drm_atomic_set_fb_for_plane(plane_state, fb);
 	plane_state->crtc_x = crtc_x;
 	plane_state->crtc_y = crtc_y;
@@ -3184,9 +3191,15 @@ int drm_atomic_helper_update_plane(struct drm_plane *plane,
 	plane_state->src_w = src_w;
 	plane_state->src_h = src_h;
 
+	// 如果当前平面是CRTC的光标平面，则将legacy_cursor_update标记为真。
+	// 这通常意味着要更新光标显示状态。
 	if (plane == crtc->cursor)
 		state->legacy_cursor_update = true;
 
+	// 通过调用drm_atomic_commit提交状态的变更。
+	// 这在硬件上执行所有已准备好的操作。
+	// 当 drm_atomic_commit 成功返回时，显示硬件会在下一次垂直同步（vblank）期间应用这些更改。
+	// 这意味着视觉上的变化将会在适当的时间进行，避免了显示撕裂等问题。
 	ret = drm_atomic_commit(state);
 fail:
 	drm_atomic_state_put(state);

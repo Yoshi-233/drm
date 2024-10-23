@@ -791,7 +791,11 @@ struct drm_get_cap {
  *
  * This capability is always supported for all drivers starting from kernel
  * version 3.13.
- */
+ * DRM核心将向用户空间暴露显示器的立体3D能力。这意味着驱动程序能够支持并处理立体3D效果的显示。
+ * 会列出支持的3D布局。具体的3D布局格式由 DRM_MODE_FLAG_3D_* 定义(drm_mode.h)，可能包括不同的立体3D格式，比如“上/下”或“左/右”等布局。
+ * 更新的内容表明，从内核版本3.13开始，所有的驱动程序都会始终支持这一能力，
+ * 这使得程序员和用户可以放心地使用这一特性，而不会因为驱动程序的差异而出现不支持的情况
+ * */
 #define DRM_CLIENT_CAP_STEREO_3D	1
 
 /**
@@ -802,6 +806,7 @@ struct drm_get_cap {
  *
  * This capability has been introduced in kernel version 3.15. Starting from
  * kernel version 3.17, this capability is always supported for all drivers.
+ * 它指出，如果该功能被设置为1，即表示DRM核心将向用户空间暴露所有的显示平面，包括覆盖层（overlay）、主平面（primary）和光标平面（cursor）。
  */
 #define DRM_CLIENT_CAP_UNIVERSAL_PLANES  2
 
@@ -818,6 +823,8 @@ struct drm_get_cap {
  * This capability has been introduced in kernel version 4.0. Starting from
  * kernel version 4.2, this capability is always supported for atomic-capable
  * drivers.
+ * 嵌套提到启用了 DRM_CLIENT_CAP_UNIVERSAL_PLANES 和 DRM_CLIENT_CAP_ASPECT_RATIO 的能力。
+ * * 这意味着，如果原子模式设置支持，该功能将自动启用。
  */
 #define DRM_CLIENT_CAP_ATOMIC	3
 
@@ -829,6 +836,9 @@ struct drm_get_cap {
  *
  * This capability is always supported for all drivers starting from kernel
  * version 4.18.
+ * 当其值设定为1时，表示系统将具备支持纵横比的能力，
+ * 并且这一功能从Linux内核版本4.18开始对所有图形驱动程序均能够支持。
+ * 该功能的存在对于有需要设置或调整图像展示比例的图形应用程序非常重要，特别是在处理多媒体内容时。
  */
 #define DRM_CLIENT_CAP_ASPECT_RATIO    4
 
@@ -841,6 +851,8 @@ struct drm_get_cap {
  *
  * This capability is always supported for atomic-capable drivers starting from
  * kernel version 4.19.
+ * 如果这个能力被设置为 1，那么DRM核心将会暴露特殊的连接器，以便能够将提交中设置的场景写回到内存。
+ * 这意味着驱动程序可以通过特定的连接器将图形数据或其他状态信息从GPU写回到主内存。
  */
 #define DRM_CLIENT_CAP_WRITEBACK_CONNECTORS	5
 
@@ -866,6 +878,10 @@ struct drm_get_cap {
  *
  * This capability is always supported for atomic-capable virtualized
  * drivers starting from kernel version 6.6.
+ * 整个注释部分详细阐述了这个宏的用途和应用场景，涉及到某些特定的驱动程序（如 vmwgfx, qxl, virtio 和 virtualbox）对光标平面的处理要求。
+ * (虚拟化驱动环境)说明了这些驱动在处理光标平面时具有额外的限制，例如需要光标平面表现得像鼠标光标，并且具备正确的热区属性。
+ * 如果客户端未设置这个能力标记，DRM核心会隱藏光标平面，表示客户端无法处理这些额外的限制。
+ * 指出只有在启用了 DRM_CLIENT_CAP_ATOMIC 的情况下，这个特性才能被使用。
  */
 #define DRM_CLIENT_CAP_CURSOR_PLANE_HOTSPOT	6
 

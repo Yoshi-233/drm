@@ -1177,6 +1177,8 @@ drm_public int drmModeSetPlane(int fd, uint32_t plane_id, uint32_t crtc_id,
 		    uint32_t src_x, uint32_t src_y,
 		    uint32_t src_w, uint32_t src_h)
 {
+	// flags：设置渲染平面的标志，控制渲染行为。
+	// 位置./libdrm-2.4.123/include/drm/drm_mode.h
 	struct drm_mode_set_plane s;
 
 	memclear(s);
@@ -1193,6 +1195,11 @@ drm_public int drmModeSetPlane(int fd, uint32_t plane_id, uint32_t crtc_id,
 	s.src_w = src_w;
 	s.src_h = src_h;
 
+	/* DRM_IOCTL_MODE_SETPLANE的定义在./libdrm-2.4.123/include/drm/drm.h
+	 * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
+	 * DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETPLANE, drm_mode_setplane, DRM_MASTER),,
+	 * drm_mode_setplane函数在 ./linux-6.11.3/drivers/gpu/drm/drm_plane.c
+	 * */
 	return DRM_IOCTL(fd, DRM_IOCTL_MODE_SETPLANE, &s);
 }
 
@@ -1258,11 +1265,21 @@ drm_public void drmModeFreePlane(drmModePlanePtr ptr)
 
 drm_public drmModePlaneResPtr drmModeGetPlaneResources(int fd)
 {
+	// struct drm_mode_get_plane_res {
+	// 	__u64 plane_id_ptr;
+	// 	__u32 count_planes;
+	// };
+	// 位置：./libdrm-2.4.123/include/drm/drm_mode.h
 	struct drm_mode_get_plane_res res, counts;
 	drmModePlaneResPtr r = 0;
 
 retry:
 	memclear(res);
+	/* DRM_IOCTL_MODE_GETPLANERESOURCES的定义在./libdrm-2.4.123/include/drm/drm.h
+	 * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
+	 * DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPLANERESOURCES, drm_mode_getplane_res, 0),,
+	 * drm_mode_getplane_res函数在 ./linux-6.11.3/drivers/gpu/drm/drm_plane.c
+	 * */
 	if (drmIoctl(fd, DRM_IOCTL_MODE_GETPLANERESOURCES, &res))
 		return 0;
 

@@ -336,9 +336,19 @@ drm_setclientcap(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		file_priv->universal_planes = req->value;
 		break;
 	case DRM_CLIENT_CAP_ATOMIC:
+		// 这行代码首先检查设备（dev）是否支持原子操作功能。drm_core_check_feature函数将验证该功能。
+		// 如果不支持，函数将返回一个-EOPNOTSUPP错误，表示操作不被支持
 		if (!drm_core_check_feature(dev, DRIVER_ATOMIC))
 			return -EOPNOTSUPP;
 		/* The modesetting DDX has a totally broken idea of atomic. */
+		// 这里检查当前进程的名称（命令名）是否为以字符'X'开头。
+		// 如果是并且请求的值为1（表示用户希望开启原子操作），则记录一条信息日志，并返回-EOPNOTSUPP，
+		// 表示禁用原子操作。这表明当前环境可能存在兼容性问题。
+		// 在Linux系统中，进程名称以'X'开头通常代表与X Window System（也称为X11或Xorg）
+		// 相关的进程。X Window System是一个用于图形用户界面（GUI）环境的标准协议，
+		// 常用于Unix和类Unix操作系统，包括Linux。具体来说，'X'开头的进程通常是指X服务器进程，
+		// 它负责管理显示和输入设备，并提供图形显示功能。因此，代码中检查当前进程是否以'X'开头，
+		// 是为了识别是否是一个图形界面相关的进程，因为这些进程在进行原子操作时可能会有特定的行为或问题。
 		if (current->comm[0] == 'X' && req->value == 1) {
 			pr_info("broken atomic modeset userspace detected, disabling atomic\n");
 			return -EOPNOTSUPP;

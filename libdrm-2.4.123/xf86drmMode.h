@@ -262,7 +262,10 @@ typedef struct _drmModePlane {
 } drmModePlane, *drmModePlanePtr;
 
 typedef struct _drmModePlaneRes {
+	// 这是一个无符号的32位整型变量，用于存储当前存在的“平面”（Plane）数量。
+	// 平面通常指的是显示的不同图层，如主图层、覆盖层等。
 	uint32_t count_planes;
+	// 这是一个指向无符号32位整型的指针，指向一个数组，该数组包含多个平面的标识符（ID）的列表。
 	uint32_t *planes;
 } drmModePlaneRes, *drmModePlaneResPtr;
 

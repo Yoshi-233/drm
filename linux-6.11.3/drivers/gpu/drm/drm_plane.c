@@ -776,6 +776,7 @@ int drm_mode_getplane_res(struct drm_device *dev, void *data,
 			  struct drm_file *file_priv)
 {
 	struct drm_mode_get_plane_res *plane_resp = data;
+	// ./linux-6.11.3/include/drm/drm_plane.h
 	struct drm_plane *plane;
 	uint32_t __user *plane_ptr;
 	int count = 0;
@@ -788,11 +789,14 @@ int drm_mode_getplane_res(struct drm_device *dev, void *data,
 	/*
 	 * This ioctl is called twice, once to determine how much space is
 	 * needed, and the 2nd time to fill it.
+	 * 这段注释说明这个IOCTL操作被调用了两次：第一次用于确定需要多少空间，第二次用于填充数据。
 	 */
 	drm_for_each_plane(plane, dev) {
 		/*
 		 * Unless userspace set the 'universal planes'
 		 * capability bit, only advertise overlays.
+		 * 该条件检查平面的类型，如果平面不是覆盖平面且用户没有设置“通用平面”能力标志，则跳过该平面。
+		 * 只有* 在用户明确请求的情况下，非覆盖平面才会被列出。
 		 */
 		if (plane->type != DRM_PLANE_TYPE_OVERLAY &&
 		    !file_priv->universal_planes)
@@ -804,6 +808,8 @@ int drm_mode_getplane_res(struct drm_device *dev, void *data,
 		 * virtualized cursor plane, disable cursor planes
 		 * because they'll be broken due to missing cursor
 		 * hotspot info.
+		 * 该条件检查当前平面是否是光标平面，并且设备支持光标热点功能。
+		 * 如果* 当前用户权限设置为原子模式（即支持原子显示更新），但用户不支持虚拟化光标平面，则跳过此平面。
 		 */
 		if (plane->type == DRM_PLANE_TYPE_CURSOR &&
 		    drm_core_check_feature(dev, DRIVER_CURSOR_HOTSPOT) &&
@@ -811,6 +817,9 @@ int drm_mode_getplane_res(struct drm_device *dev, void *data,
 		    !file_priv->supports_virtualized_cursor_plane)
 			continue;
 
+		// 这里检查当前用户是否拥有对该平面的租赁权限。
+		// 如果用户有权限且当前平面计数少于响应结构中允许的平面数，则尝试将平面的ID写入用户空间。
+		// 如果写入失败，返回错误 -EFAULT。成功写入后，平面计数 count 增加。
 		if (drm_lease_held(file_priv, plane->base.id)) {
 			if (count < plane_resp->count_planes &&
 			    put_user(plane->base.id, plane_ptr + count))
@@ -1091,6 +1100,9 @@ static int setplane_internal(struct drm_plane *plane,
 	DRM_MODESET_LOCK_ALL_BEGIN(plane->dev, ctx,
 				   DRM_MODESET_ACQUIRE_INTERRUPTIBLE, ret);
 
+	// 这段代码用于检查当前设备是否支持原子模式设置（即对显示设备的多个属性进行原子性更新）。
+	// 如果支持，则调用 __setplane_atomic() 函数，负责在原子模式下更新平面的状态。
+	// 如果不支持，则调用 __setplane_internal() 函数，执行常规的更新操作。两者的参数包括平面对象、输出控制器、帧缓冲以及窗口和源的坐标和尺寸。
 	if (drm_drv_uses_atomic_modeset(plane->dev))
 		ret = __setplane_atomic(plane, crtc, fb,
 					crtc_x, crtc_y, crtc_w, crtc_h,
@@ -1108,6 +1120,7 @@ static int setplane_internal(struct drm_plane *plane,
 int drm_mode_setplane(struct drm_device *dev, void *data,
 		      struct drm_file *file_priv)
 {
+	// 位置：./linux-6.11.3/include/uapi/drm/drm_mode.h
 	struct drm_mode_set_plane *plane_req = data;
 	struct drm_plane *plane;
 	struct drm_crtc *crtc = NULL;
@@ -1145,12 +1158,16 @@ int drm_mode_setplane(struct drm_device *dev, void *data,
 		}
 	}
 
+	// 通过调用 setplane_internal 函数设置平面。
+	// 该函数会使用查找到的 plane、crtc 和 fb 以及图形区域的位置和大小参数进行设置。
+	// 该函数在drm_plane.c
 	ret = setplane_internal(plane, crtc, fb,
 				plane_req->crtc_x, plane_req->crtc_y,
 				plane_req->crtc_w, plane_req->crtc_h,
 				plane_req->src_x, plane_req->src_y,
 				plane_req->src_w, plane_req->src_h);
 
+	// 释放帧缓冲
 	if (fb)
 		drm_framebuffer_put(fb);
 
