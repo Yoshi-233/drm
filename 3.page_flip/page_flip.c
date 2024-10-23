@@ -120,10 +120,13 @@ int main(int argc, char **argv)
 	drmModeSetCrtc(fd, crtc_id, buf[0].fb_id,
 			0, 0, &conn_id, 1, &conn->modes[0]);
 
+	// DRM_MODE_PAGE_FLIP_ASYNC：立即翻转
+	// DRM_MODE_PAGE_FLIP_EVENT：发送翻页事件
 	drmModePageFlip(fd, crtc_id, buf[0].fb_id,
 			DRM_MODE_PAGE_FLIP_EVENT, &crtc_id);
 
 	while (!terminate) {
+		// 当执行drmHandleEvent时 会触发ev.page_flip_handler = modeset_page_flip_handler;进行页翻转
 		drmHandleEvent(fd, &ev);
 	}
 
