@@ -116,10 +116,6 @@ int main(int argc, char **argv)
 	* src_w, src_h为显示buffer使用的大小
 	* flag:
 	* 0：不使用标志，表示平面以默认方式进行渲染。
-	* DRM_MODE_PAGE_FLIP：如果设置了此标志，平面将以页面翻转的方式更新，这通常用于提高显示性能，特别是在视频播放时。
-	* DRM_MODE_ATOMIC：如果系统支持原子操作（atomic modesetting），可以使用此标志来表示此设置是一个原子操作的一部分。原子操作可以使得多个显示属性的更改能够在一次更新中同时发生，以避免视觉上的干扰。
-	* DRM_MODE_REFLECT_X 和 DRM_MODE_REFLECT_Y：这些标志用于翻转图像的方向，DRM_MODE_REFLECT_X 表示水平翻转，DRM_MODE_REFLECT_Y 表示垂直翻转。
-	* DRM_MODE_SCALE：这个标志用于指定是否对平面进行缩放。
 	* */
 	drmModeSetPlane(fd, plane_id, crtc_id, buf.fb_id, 0,
 			50, 50, 320, 320,
