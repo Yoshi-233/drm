@@ -1,0 +1,149 @@
+flags 参考：
+#define DRM_MODE_PROP_PENDING	(1<<0) /* deprecated, do not use */
+#define DRM_MODE_PROP_RANGE	(1<<1)
+#define DRM_MODE_PROP_IMMUTABLE	(1<<2) 属性不可变
+#define DRM_MODE_PROP_ENUM	(1<<3) /* enumerated type with text strings */
+#define DRM_MODE_PROP_BLOB	(1<<4) // 该属性值存储在二进制对象中
+#define DRM_MODE_PROP_BITMASK	(1<<5) /* bitmask of enumerated types */
+
+/* non-extended types: legacy bitmask, one bit per type: */
+#define DRM_MODE_PROP_LEGACY_TYPE  ( \
+		DRM_MODE_PROP_RANGE | \
+		DRM_MODE_PROP_ENUM | \
+		DRM_MODE_PROP_BLOB | \
+		DRM_MODE_PROP_BITMASK)
+
+ /* extended-types: rather than continue to consume a bit per type,
+* grab a chunk of the bits to use as integer type id.
+*/
+#define DRM_MODE_PROP_EXTENDED_TYPE	0x0000ffc0  扩展类型
+#define DRM_MODE_PROP_TYPE(n)		((n) << 6)
+#define DRM_MODE_PROP_OBJECT		DRM_MODE_PROP_TYPE(1)
+#define DRM_MODE_PROP_SIGNED_RANGE	DRM_MODE_PROP_TYPE(2)
+
+/* the PROP_ATOMIC flag is used to hide properties from userspace that
+ * is not aware of atomic properties.  This is mostly to work around
+ * older userspace (DDX drivers) that read/write each prop they find,
+ * without being aware that this could be triggering a lengthy modeset.
+ */
+#define DRM_MODE_PROP_ATOMIC        0x80000000 */
+
+可以看到打印：
+/-----conn_Property-----/
+count_props is 8.
+ --------- props:id=2, value=0x0 ---------
+id:2, flag:0x8, name:DPMS	
+------ property count_values is 4. ------
+ idx[0] property values:0x0.
+ idx[1] property values:0x1.
+ idx[2] property values:0x2.
+ idx[3] property values:0x3.
+ ------ property count_enums is 4. ------
+ idx[0] property enum name:On, val:0x0.
+ idx[1] property enum name:Standby, val:0x1.
+ idx[2] property enum name:Suspend, val:0x2.
+ idx[3] property enum name:Off, val:0x3.
+ ------ property count_blobs is 0.
+ --------------- end ---------
+
+--------- props:id=5, value=0x0 ---------
+id:5, flag:0x8, name:link-status	
+------ property count_values is 2. ------
+ idx[0] property values:0x0.
+ idx[1] property values:0x1.
+ ------ property count_enums is 2. ------
+ idx[0] property enum name:Good, val:0x0.
+ idx[1] property enum name:Bad, val:0x1.
+ ------ property count_blobs is 0.
+ --------------- end ---------
+
+--------- props:id=6, value=0x0 ---------
+id:6, flag:0x6, name:non-desktop	
+------ property count_values is 2. ------
+ idx[0] property values:0x0.
+ idx[1] property values:0x1.
+ ------ property count_enums is 0. ------
+ ------ property count_blobs is 0.
+ --------------- end ---------
+
+--------- props:id=4, value=0x0 ---------
+id:4, flag:0x14, name:TILE	
+------ property count_values is 0. ------
+ ------ property count_enums is 0. ------
+ ------ property count_blobs is 0.
+ --------------- end ---------
+
+--------- props:id=20, value=0x2a ---------
+id:20, flag:0x80000040, name:CRTC_ID	
+------ property count_values is 1. ------
+ idx[0] property values:0xcccccccc. // #define DRM_MODE_OBJECT_CRTC 0xcccccccc
+ ------ property count_enums is 0. ------
+ ------ property count_blobs is 0.
+ --------------- end ---------
+
+--------- props:id=33, value=0x1 ---------
+id:33, flag:0x6, name:hotplug_mode_update //热插拔模式更新	
+------ property count_values is 2. ------
+ idx[0] property values:0x0.
+ idx[1] property values:0x1.
+ ------ property count_enums is 0. ------
+ ------ property count_blobs is 0.
+ --------------- end ---------
+
+--------- props:id=31, value=0x0 ---------
+id:31, flag:0x6, name:suggested X	// 建议的X/Y起始位置
+------ property count_values is 2. ------
+ idx[0] property values:0x0.
+ idx[1] property values:0xffffffff.
+ ------ property count_enums is 0. ------
+ ------ property count_blobs is 0.
+ --------------- end ---------
+
+--------- props:id=32, value=0x0 ---------
+id:32, flag:0x6, name:suggested Y	
+------ property count_values is 2. ------
+ idx[0] property values:0x0.
+ idx[1] property values:0xffffffff.
+ ------ property count_enums is 0. ------
+ ------ property count_blobs is 0.
+ --------------- end ---------
+
+
+
+/-----CRTC_Property-----/
+count_props is 4.
+ --------- props:id=22, value=0x1 ---------
+id:22, flag:0x80000002, name:ACTIVE	
+------ property count_values is 2. ------
+ idx[0] property values:0x0.
+ idx[1] property values:0x1.
+ ------ property count_enums is 0. ------
+ ------ property count_blobs is 0.
+ --------------- end ---------
+
+--------- props:id=23, value=0x71 ---------
+id:23, flag:0x80000010, name:MODE_ID	
+------ property count_values is 0. ------
+ ------ property count_enums is 0. ------
+ ------ property count_blobs is 0.
+ --------------- end ---------
+
+--------- props:id=19, value=0x0 ---------
+id:19, flag:0x80000002, name:OUT_FENCE_PTR	// 指示当前显示的buffer对应的fence指针
+------ property count_values is 2. ------
+ idx[0] property values:0x0.
+ idx[1] property values:0xffffffffffffffff.
+ ------ property count_enums is 0. ------
+ ------ property count_blobs is 0.
+ --------------- end ---------
+
+--------- props:id=24, value=0x0 ---------
+id:24, flag:0x2, name:VRR_ENABLED	 // 动态分辨率
+------ property count_values is 2. ------
+ idx[0] property values:0x0.
+ idx[1] property values:0x1.
+ ------ property count_enums is 0. ------
+ ------ property count_blobs is 0.
+ --------------- end ---------
+
+
