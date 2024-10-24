@@ -102,23 +102,26 @@ static uint32_t get_property(int fd, drmModeObjectProperties *props)
 
 	printf("count_props is %d.\n ",props->count_props);
 	for (i = 0; i < props->count_props; i++) {
-		printf("props:id = %d , value=%ld\n", props->props[i], props->prop_values[i]);
+		printf("--------- props:id=%d, value=0x%lx ---------\n", props->props[i], props->prop_values[i]);
 		// 位于./libdrm-2.4.123/xf86drmMode.c
 		property = drmModeGetProperty(fd, props->props[i]);
-		printf("id:%d, flag:0x%x, name:%s\t\t---",property->prop_id, property->flags, property->name);
+		printf("id:%d, flag:0x%x, name:%s\t\n",property->prop_id, property->flags, property->name);
 		printf("property count_values is %d.\n ", property->count_values);
 		for(j = 0; j < property->count_values; j++) {
-			printf("idx[%d] property values:0x%llx.\n ", j, property->values[j]);
+			printf("idx[%d] property values:0x%lx.\n ", j, property->values[j]);
 		}
+		printf("\n");
 		printf("property count_enums is %d.\n ", property->count_enums);
 		for(j = 0; j < property->count_enums; j++) {
-			printf("idx[%d] property enum name:%s, val:0x%x.\n ", j, 
+			printf("idx[%d] property enum name:%s, val:0x%llx.\n ", j, 
 				property->enums[j].name, property->enums[j].value);
 		}
+		printf("\n");
 		printf("property count_blobs is %d.\n ", property->count_blobs);
 		for(j = 0; j < property->count_blobs; j++) {
 			printf("idx[%d] property blob_id:0x%x.\n ", j, property->blob_ids[j]);
 		}
+		printf("--------- end ---------\n");
 	}
     return 0;
 }
@@ -184,7 +187,7 @@ void drm_init()
 
 	/* get crtc properties */
 	props = drmModeObjectGetProperties(fd, crtc_id, DRM_MODE_OBJECT_CRTC);
-	printf("/-----CRTC_Property-----/\n");
+	printf("\n/-----CRTC_Property-----/\n");
 	get_property(fd, props);
 	printf("\n");
 	pc.property_active = get_property_id(fd, props, "ACTIVE");
