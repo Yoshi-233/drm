@@ -1555,7 +1555,14 @@ drm_public int drmModeAtomicAddProperty(drmModeAtomicReqPtr req,
 	if (object_id == 0 || property_id == 0)
 		return -EINVAL;
 
+	// 一次性申请多个
 	if (req->cursor >= req->size_items) {
+		// getpagesize() 是一个系统调用，通常在 UNIX/Linux 系统中提供。
+		// 它返回系统每个内存页面的大小（以字节为单位）。
+		/* 计算当前系统内存页面大小与每个请求项目（drmModeAtomicReqItem）大小的比值，
+		 * 以确定在内存页面中可以容纳的请求项目的数量。这一信息对于内存管理至关重要，
+		 * 特别是在动态分配内存时，用于优化内存使用和避免内存浪费。这种做法可以提高程序性能，
+		 * 确保请求项在内存中以合适的方式分配和管理。 */
 		const uint32_t item_size_inc = getpagesize() / sizeof(*req->items);
 		drmModeAtomicReqItemPtr new;
 

@@ -1191,6 +1191,9 @@ struct drm_mode_destroy_dumb {
  *
  * See &drm_mode_config_funcs.atomic_check for more details on test-only
  * commits.
+ * 功能：当此标志被设置时，不会真正应用原子提交，而是检查硬件是否支持当前的配置。
+ *      这个测试可以确保在尝试改变硬件状态之前，不会实际影响输出。
+ * 用途：在用户空间进行更新之前，先验证硬件是否能正确执行该更新，以避免因不兼容而导致的错误
  */
 #define DRM_MODE_ATOMIC_TEST_ONLY 0x0100
 /**
@@ -1200,6 +1203,9 @@ struct drm_mode_destroy_dumb {
  * IOCTL returns immediately instead of waiting for the changes to be applied
  * in hardware. Note, the driver will still check that the update can be
  * applied before retuning.
+ * 功能：此标志指示在应用原子提交时不应阻塞。调用该IOCTL后，函数会立即返回，而不需等待硬件应用更改。
+ *      尽管这样，不同驱动仍会检查更新是否可以成功应用。
+ * 用途：适用于需要快速响应而不想等待硬件完成任务的场景，帮助减少延迟。
  */
 #define DRM_MODE_ATOMIC_NONBLOCK  0x0200
 /**
@@ -1221,6 +1227,11 @@ struct drm_mode_destroy_dumb {
  * To the best of the driver's knowledge, visual artifacts are guaranteed to
  * not appear when this flag is not set. Some sinks might display visual
  * artifacts outside of the driver's control.
+ * 功能：允许更新在应用过程中产生临时或暂时的可见伪影（visual artifacts）。
+ *      更新可能比单纯的页面翻转需要更多时间，同时在更新完成之前可能会出现视觉伪影。
+ * 用途：必须设置此标志当KMS更新可能造成视觉伪影时。如果没有设置且更新可能导致伪影，
+ *      则KMS更新将会返回错误（EINVAL）。这个标志确保在发生潜在视觉伪影的情况下，
+ *      用户空间可以做出必要的调整以处理这些伪影。
  */
 #define DRM_MODE_ATOMIC_ALLOW_MODESET 0x0400
 
