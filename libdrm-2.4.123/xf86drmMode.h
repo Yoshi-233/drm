@@ -144,6 +144,7 @@ typedef struct _drmModeProperty {
 	int count_values;
 	uint64_t *values; /* store the blob lengths */
 	int count_enums;
+	// count_enums是一个整型，表示与该属性相关的枚举类型的数量。
 	struct drm_mode_property_enum *enums;
 	int count_blobs;
 	uint32_t *blob_ids; /* store the blob IDs */
@@ -460,7 +461,7 @@ extern int drmModeObjectSetProperty(int fd, uint32_t object_id,
 				    uint32_t object_type, uint32_t property_id,
 				    uint64_t value);
 
-
+// 结构体实现在./libdrm-2.4.123/xf86drmMode.c
 typedef struct _drmModeAtomicReq drmModeAtomicReq, *drmModeAtomicReqPtr;
 
 extern drmModeAtomicReqPtr drmModeAtomicAlloc(void);

@@ -646,11 +646,14 @@ struct drm_mode_property_enum {
  * &DRM_MODE_PROP_ENUM or &DRM_MODE_PROP_BITMASK, allocate an array for
  * @enum_blob_ptr and set @count_enum_blobs to its capacity. Calling the ioctl
  * again will fill the arrays.
+ * struct drm_mode_get_property 主要用于用户空间与内核之间的交互，帮助用户获取与设备相关属性的信息。
  */
 struct drm_mode_get_property {
 	/** @values_ptr: Pointer to a ``__u64`` array. */
 	__u64 values_ptr;
-	/** @enum_blob_ptr: Pointer to a struct drm_mode_property_enum array. */
+	/** @enum_blob_ptr: Pointer to a struct drm_mode_property_enum array.
+	 * 这些字段在属性类型为 DRM_MODE_PROP_ENUM 或 DRM_MODE_PROP_BITMASK 时才有意义。
+	 */
 	__u64 enum_blob_ptr;
 
 	/**

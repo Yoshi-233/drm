@@ -172,6 +172,8 @@ struct drm_property {
 	 *	DRM_MODE_PROP_BLOB：用于存储二进制数据的blob类型属性。
 	 *	DRM_MODE_PROP_ATOMIC：标记该属性可用于原子模式设置。
 	 *	DRM_MODE_PROP_IMMUTABLE：表示该属性的值无法被用户空间改变。
+	 * 
+	 * 	DRM_MODE_PROP_EXTENDED_TYPE是flag中对应的type字段
 	 */
 	uint32_t flags;
 
@@ -322,7 +324,10 @@ static inline struct drm_property *drm_property_find(struct drm_device *dev,
 						     uint32_t id)
 {
 	struct drm_mode_object *mo;
+	// ./linux-6.11.3/drivers/gpu/drm/drm_mode_object.c
+	// 通过属性id和查找类型找到相应对象
 	mo = drm_mode_object_find(dev, file_priv, id, DRM_MODE_OBJECT_PROPERTY);
+	// 根据查找到的对象找到属性
 	return mo ? obj_to_property(mo) : NULL;
 }
 

@@ -140,6 +140,8 @@ struct drm_mode_object *__drm_mode_object_find(struct drm_device *dev,
 	struct drm_mode_object *obj = NULL;
 
 	mutex_lock(&dev->mode_config.idr_mutex);
+	// idr_find 是一个用于查找 IDR（ID radix tree）中的条目的函数。
+	// 它的作用是通过给定的 id 从 device 表示的 mode_config.object_idr 中查找对应的对象。
 	obj = idr_find(&dev->mode_config.object_idr, id);
 	if (obj && type != DRM_MODE_OBJECT_ANY && obj->type != type)
 		obj = NULL;
@@ -178,6 +180,7 @@ struct drm_mode_object *drm_mode_object_find(struct drm_device *dev,
 {
 	struct drm_mode_object *obj = NULL;
 
+	// 位于当前目录下
 	obj = __drm_mode_object_find(dev, file_priv, id, type);
 	return obj;
 }
@@ -327,7 +330,7 @@ static int __drm_object_property_get_value(struct drm_mode_object *obj,
 	if (drm_drv_uses_atomic_modeset(property->dev) &&
 			!(property->flags & DRM_MODE_PROP_IMMUTABLE))
 		return drm_atomic_get_property(obj, property, val);
-
+	// 获取属性的值
 	return __drm_object_property_get_prop_value(obj, property, val);
 }
 
@@ -399,6 +402,7 @@ int drm_mode_object_get_properties(struct drm_mode_object *obj, bool atomic,
 			continue;
 
 		if (*arg_count_props > count) {
+			// 函数在当前文件
 			ret = __drm_object_property_get_value(obj, prop, &val);
 			if (ret)
 				return ret;

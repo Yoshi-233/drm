@@ -710,12 +710,18 @@ drm_public int drmModeDetachMode(int fd, uint32_t connector_id, drmModeModeInfoP
 
 drm_public drmModePropertyPtr drmModeGetProperty(int fd, uint32_t property_id)
 {
+	// ./libdrm-2.4.123/include/drm/drm_mode.h
 	struct drm_mode_get_property prop;
 	drmModePropertyPtr r;
 
 	memclear(prop);
 	prop.prop_id = property_id;
 
+	/* DRM_IOCTL_MODE_GETPROPERTY的定义在./libdrm-2.4.123/include/drm/drm.h
+	 * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
+	 * DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPROPERTY, drm_mode_getproperty_ioctl, 0),,
+	 * drm_mode_getproperty_ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_property.c
+	 * */
 	if (drmIoctl(fd, DRM_IOCTL_MODE_GETPROPERTY, &prop))
 		return 0;
 
@@ -1331,6 +1337,16 @@ drm_public drmModeObjectPropertiesPtr drmModeObjectGetProperties(int fd,
 						      uint32_t object_id,
 						      uint32_t object_type)
 {
+	// ./libdrm-2.4.123/include/drm/drm_mode.h
+	/* 
+	struct drm_mode_obj_get_properties {
+		__u64 props_ptr;
+		__u64 prop_values_ptr;
+		__u32 count_props;
+		__u32 obj_id;
+		__u32 obj_type;
+	}; 
+	* */
 	struct drm_mode_obj_get_properties properties;
 	drmModeObjectPropertiesPtr ret = NULL;
 	uint32_t count;
@@ -1340,6 +1356,11 @@ retry:
 	properties.obj_id = object_id;
 	properties.obj_type = object_type;
 
+	/* DRM_IOCTL_MODE_OBJ_GETPROPERTIES的定义在./libdrm-2.4.123/include/drm/drm.h
+	 * 对应的ioctl函数在 ./linux-6.11.3/drivers/gpu/drm/drm_ioctl.c
+	 * DRM_IOCTL_DEF(DRM_IOCTL_MODE_OBJ_GETPROPERTIES, drm_mode_obj_get_properties_ioctl, 0),
+	 * drm_mode_obj_get_properties_ioctl函数在 . /linux-6.11.3/drivers/gpu/drm/drm_mode_object.c
+	 * */
 	if (drmIoctl(fd, DRM_IOCTL_MODE_OBJ_GETPROPERTIES, &properties))
 		return 0;
 
@@ -1420,9 +1441,15 @@ struct _drmModeAtomicReqItem {
 	uint32_t cursor;
 };
 
+// 它是用于描述一个原子操作请求的数据结构
 struct _drmModeAtomicReq {
+	// 通常用作指向当前处理的请求项的索引或标记，指示当前操作在items数组中的位置。
+	// 可以理解为在多个操作中的“当前位置”
 	uint32_t cursor;
+	// 用于存储 items 数组的大小，也就是可以存储的最大请求项数量。
+	// 这个大小允许我们动态管理请求项，避免溢出。
 	uint32_t size_items;
+	// 链表结构
 	drmModeAtomicReqItemPtr items;
 };
 

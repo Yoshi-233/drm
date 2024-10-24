@@ -459,10 +459,12 @@ int drm_mode_getproperty_ioctl(struct drm_device *dev,
 			       void *data, struct drm_file *file_priv)
 {
 	struct drm_mode_get_property *out_resp = data;
+	// ./linux-6.11.3/include/drm/drm_property.h
 	struct drm_property *property;
 	int enum_count = 0;
 	int value_count = 0;
 	int i, copied;
+	// ./linux-6.11.3/include/drm/drm_property.h
 	struct drm_property_enum *prop_enum;
 	struct drm_mode_property_enum __user *enum_ptr;
 	uint64_t __user *values_ptr;
@@ -470,16 +472,19 @@ int drm_mode_getproperty_ioctl(struct drm_device *dev,
 	if (!drm_core_check_feature(dev, DRIVER_MODESET))
 		return -EOPNOTSUPP;
 
+	// ./linux-6.11.3/include/drm/drm_property.h
 	property = drm_property_find(dev, file_priv, out_resp->prop_id);
 	if (!property)
 		return -ENOENT;
 
+	// 找到的属性名字和flag赋值给外参
 	strscpy_pad(out_resp->name, property->name, DRM_PROP_NAME_LEN);
 	out_resp->flags = property->flags;
 
 	value_count = property->num_values;
 	values_ptr = u64_to_user_ptr(out_resp->values_ptr);
 
+	// 将获取到的property的values给用户空间的地址
 	for (i = 0; i < value_count; i++) {
 		if (i < out_resp->count_values &&
 		    put_user(property->values[i], values_ptr + i)) {
@@ -491,6 +496,7 @@ int drm_mode_getproperty_ioctl(struct drm_device *dev,
 	copied = 0;
 	enum_ptr = u64_to_user_ptr(out_resp->enum_blob_ptr);
 
+	// 位于./linux-6.11.3/include/drm/drm_property.h
 	if (drm_property_type_is(property, DRM_MODE_PROP_ENUM) ||
 	    drm_property_type_is(property, DRM_MODE_PROP_BITMASK)) {
 		list_for_each_entry(prop_enum, &property->enum_list, head) {
@@ -517,6 +523,7 @@ int drm_mode_getproperty_ioctl(struct drm_device *dev,
 	 * read the value for a blob property. It also doesn't make a lot of
 	 * sense to return values here when everything else is just metadata for
 	 * the property itself.
+	 * 对于BLOB类型的属性，由于用户空间通常通过特定的get_blob IOCTL来读取这些值，因此将count_enum_blobs设置为0。
 	 */
 	if (drm_property_type_is(property, DRM_MODE_PROP_BLOB))
 		out_resp->count_enum_blobs = 0;

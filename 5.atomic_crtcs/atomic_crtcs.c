@@ -94,13 +94,31 @@ static void drm_destroy_fb(struct drm_device *bo)
 
 static uint32_t get_property(int fd, drmModeObjectProperties *props)
 {
+	// 位于./libdrm-2.4.123/xf86drmMode.h
+	// drmModeObjectProperties *props是一群属性
+	// drmModePropertyPtr property是单个属性，通过drmModeGetProperty获得
 	drmModePropertyPtr property;
-	uint32_t i;
+	uint32_t i, j;
 
+	printf("count_props is %d.\n ",props->count_props);
 	for (i = 0; i < props->count_props; i++) {
+		printf("props:id = %d , value=%ld\n", props->props[i], props->prop_values[i]);
+		// 位于./libdrm-2.4.123/xf86drmMode.c
 		property = drmModeGetProperty(fd, props->props[i]);
-		printf("\"%s\"\t\t---",property->name);
-		printf("id = %d , value=%ld\n",props->props[i],props->prop_values[i]);
+		printf("id:%d, flag:0x%x, name:%s\t\t---",property->prop_id, property->flags, property->name);
+		printf("property count_values is %d.\n ", property->count_values);
+		for(j = 0; j < property->count_values; j++) {
+			printf("idx[%d] property values:0x%llx.\n ", j, property->values[j]);
+		}
+		printf("property count_enums is %d.\n ", property->count_enums);
+		for(j = 0; j < property->count_enums; j++) {
+			printf("idx[%d] property enum name:%s, val:0x%x.\n ", j, 
+				property->enums[j].name, property->enums[j].value);
+		}
+		printf("property count_blobs is %d.\n ", property->count_blobs);
+		for(j = 0; j < property->count_blobs; j++) {
+			printf("idx[%d] property blob_id:0x%x.\n ", j, property->blob_ids[j]);
+		}
 	}
     return 0;
 }
@@ -130,7 +148,9 @@ void drm_init()
 {
 	int i;
 
+	// 位于./libdrm-2.4.123/xf86drmMode.h
 	drmModeObjectProperties *props;
+	// 位于./libdrm-2.4.123/xf86drmMode.h, 结构体实现在./libdrm-2.4.123/xf86drmMode.c
 	drmModeAtomicReq *req;
 
 	fd = open("/dev/dri/card0", O_RDWR | O_CLOEXEC);
@@ -154,6 +174,7 @@ void drm_init()
 	drmSetClientCap(fd, DRM_CLIENT_CAP_ATOMIC, 1);
 
 	/* get connector properties */
+	// ./libdrm-2.4.123/xf86drmMode.c
 	props = drmModeObjectGetProperties(fd, conn_id,	DRM_MODE_OBJECT_CONNECTOR);
 	printf("/-----conn_Property-----/\n");
 	get_property(fd, props);
@@ -171,6 +192,8 @@ void drm_init()
 	drmModeFreeObjectProperties(props);
 
 	/* create blob to store current mode, and retun the blob id */
+	// 使用drmModeCreatePropertyBlob创建一个blob来存储当前的显示模式，blob的ID存储在pc.blob_id中。
+	// 这是为了在设置显示模式时能够引用当前的模式。
 	drmModeCreatePropertyBlob(fd, &conn->modes[0],
 				sizeof(conn->modes[0]), &pc.blob_id);
 
